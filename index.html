@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>問易 v2 · 狀態鏡子</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#23211c; --ink-soft:#5c574c; --ink-faint:#938c7e;
+    --paper:#f6f3ec; --card:#fffdf8; --line:#e4ddcf;
+    --accent:#3a5a52; --accent-soft:#e8efe9;
+    /* 三態色 */
+    --good:#3a7a5a; --good-soft:#e6f1ea;
+    --neutral:#5b6b7a; --neutral-soft:#e9eef2;
+    --lack:#9a6a4a; --lack-soft:#f3e7dd;
+    --radius:16px; --maxw:560px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:"Noto Sans TC",sans-serif;
+    font-weight:300;line-height:1.7;letter-spacing:.01em;padding:0 18px env(safe-area-inset-bottom)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:28px 0 120px}
+  header{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+  .logo{font-family:"Noto Serif TC",serif;font-weight:700;font-size:22px;letter-spacing:.08em}
+  .sub{font-size:12px;color:var(--ink-faint);letter-spacing:.18em}
+  .tagline{font-size:13px;color:var(--ink-soft);margin:0 0 26px;line-height:1.6}
+  .progress{display:flex;gap:6px;margin-bottom:26px}
+  .progress i{flex:1;height:3px;border-radius:3px;background:var(--line);transition:.4s}
+  .progress i.on{background:var(--accent)}
+  .step{animation:rise .5s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .q-eyebrow{font-size:12px;letter-spacing:.2em;color:var(--accent);margin-bottom:8px;font-weight:500}
+  h2.q{font-family:"Noto Serif TC",serif;font-weight:500;font-size:21px;line-height:1.5;margin:0 0 4px}
+  .q-hint{font-size:13px;color:var(--ink-faint);margin:0 0 20px}
+  .opt{display:block;width:100%;text-align:left;cursor:pointer;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;margin-bottom:10px;
+    font-size:15px;color:var(--ink);font-family:inherit;font-weight:300;line-height:1.5;transition:.18s;
+    display:flex;align-items:center;gap:12px}
+  .opt:active{transform:scale(.99)}
+  .opt .mark{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;transition:.18s}
+  .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .opt.sel .mark{border-color:var(--accent);background:var(--accent)}
+  .opt.sel .mark::after{content:"";width:7px;height:7px;border-radius:50%;background:#fff}
+  .group-label{font-size:12px;color:var(--ink-faint);letter-spacing:.12em;margin:22px 0 10px;font-weight:500}
+  .group-label:first-of-type{margin-top:4px}
+  textarea{width:100%;min-height:120px;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:15px 16px;font-family:inherit;font-size:15px;font-weight:300;
+    color:var(--ink);line-height:1.6;resize:vertical}
+  textarea:focus{outline:none;border-color:var(--accent)}
+  textarea::placeholder{color:var(--ink-faint)}
+  .bar{position:fixed;left:0;right:0;bottom:0;padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,var(--paper) 70%,transparent)}
+  .bar-inner{max-width:var(--maxw);margin:0 auto;display:flex;gap:10px;align-items:center}
+  .btn{flex:1;border:none;border-radius:999px;padding:15px;font-family:"Noto Serif TC",serif;
+    font-size:16px;letter-spacing:.05em;cursor:pointer;transition:.18s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:disabled{background:var(--line);color:var(--ink-faint);cursor:not-allowed}
+  .btn-primary:active:not(:disabled){transform:scale(.98)}
+  .btn-ghost{flex:none;background:none;border:none;color:var(--ink-faint);font-size:14px;cursor:pointer;padding:15px 4px;font-family:inherit}
+
+  /* 回放確認 */
+  .replay{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 20px;margin-bottom:8px}
+  .replay .lead{font-size:15px;line-height:1.7;color:var(--ink);margin:0 0 4px}
+  .replay .hexname{font-family:"Noto Serif TC",serif;font-weight:700;color:var(--accent)}
+
+  /* 報告 */
+  .report .tone-badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;letter-spacing:.12em;
+    padding:6px 14px;border-radius:999px;margin-bottom:12px;font-weight:500}
+  .tone-good{background:var(--good-soft);color:var(--good)}
+  .tone-neutral{background:var(--neutral-soft);color:var(--neutral)}
+  .tone-lack{background:var(--lack-soft);color:var(--lack)}
+  .tone-badge .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  .hex-card{color:#fff;border-radius:var(--radius);padding:26px 22px;margin-bottom:14px;position:relative;overflow:hidden}
+  .hex-card.b-good{background:var(--good)} .hex-card.b-neutral{background:var(--neutral)} .hex-card.b-lack{background:var(--lack)}
+  .hex-card .glyph{position:absolute;right:-6px;top:-18px;font-family:"Noto Serif TC",serif;font-size:130px;font-weight:700;opacity:.10;line-height:1}
+  .hex-card .lab{font-size:12px;letter-spacing:.2em;opacity:.85;margin-bottom:8px}
+  .hex-card .name{font-family:"Noto Serif TC",serif;font-size:34px;font-weight:700;letter-spacing:.05em;margin:0;line-height:1.2}
+  .hex-card .theme{font-size:14px;opacity:.9;margin-top:4px}
+  .hex-card .state{font-size:14.5px;line-height:1.75;margin-top:14px;opacity:.97}
+
+  .between{background:var(--neutral-soft);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;
+    font-size:13.5px;line-height:1.7;color:var(--neutral)}
+  .between b{font-family:"Noto Serif TC",serif}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+  .panel.good-panel{background:var(--good-soft);border-color:transparent}
+  .panel h3{font-family:"Noto Serif TC",serif;font-weight:500;font-size:15px;margin:0 0 10px;letter-spacing:.05em}
+  .panel.good-panel h3{color:var(--good)} .panel h3{color:var(--accent)}
+  .panel p{margin:0;font-size:14.5px;line-height:1.75;color:var(--ink-soft)}
+  .panel p+p{margin-top:8px}
+  .panel ul{margin:0;padding-left:18px}
+  .panel li{font-size:14.5px;line-height:1.7;color:var(--ink-soft);margin-bottom:4px}
+
+  .bagua-row{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:13.5px}
+  .bagua-row .nm{font-family:"Noto Serif TC",serif;width:26px;flex:none;color:var(--ink)}
+  .bagua-row .track{flex:1;height:7px;background:var(--line);border-radius:7px;overflow:hidden}
+  .bagua-row .fill{height:100%;border-radius:7px;transition:width .8s}
+  .bagua-row .tag{flex:none;font-size:11px;padding:2px 9px;border-radius:999px}
+  .tag.t-good{background:var(--good-soft);color:var(--good)}
+  .tag.t-over,.tag.t-under{background:var(--lack-soft);color:var(--lack)}
+  .tag.t-neutral{color:var(--ink-faint)}
+
+  /* 介於兩卦：切換 */
+  .hex-switch{margin-bottom:12px}
+  .sw-hint{font-size:12.5px;color:var(--ink-faint);display:block;margin-bottom:8px}
+  .sw-tags{display:flex;gap:10px}
+  .sw-tag{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;cursor:pointer;
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;
+    font-family:inherit;transition:.18s}
+  .sw-tag .g{font-family:"Noto Serif TC",serif;font-size:20px;font-weight:700;color:var(--ink)}
+  .sw-tag .t{font-size:12px;color:var(--ink-faint)}
+  .sw-tag.on{border-color:var(--accent);background:var(--accent-soft)}
+  .sw-tag.on .g{color:var(--accent)}
+  .sw-tag:active{transform:scale(.98)}
+
+  /* 八卦可展開 */
+  .bagua-item{border-bottom:1px solid var(--line)}
+  .bagua-item:last-child{border-bottom:none}
+  .bagua-row{width:100%;background:none;border:none;font-family:inherit;cursor:pointer;
+    display:flex;align-items:center;gap:10px;margin:0;padding:11px 0;font-size:13.5px}
+  .bagua-row .caret{flex:none;color:var(--ink-faint);font-size:14px;transition:.25s;line-height:1}
+  .bagua-item.open .caret{transform:rotate(180deg)}
+  .bagua-detail{max-height:0;overflow:hidden;transition:max-height .3s ease;font-size:13px}
+  .bagua-item.open .bagua-detail{max-height:160px}
+  .bagua-detail .fn{color:var(--ink);font-weight:500;padding:2px 0 6px;font-family:"Noto Serif TC",serif}
+  .bagua-detail .bipolar{display:flex;flex-direction:column;gap:4px;padding-bottom:12px}
+  .bagua-detail .bipolar span{color:var(--ink-faint);line-height:1.5}
+  .bagua-detail .bipolar span.hl{color:var(--lack);font-weight:500}
+
+  /* 功能重點卡 */
+  .fcard{padding:13px 0;border-bottom:1px solid var(--line)}
+  .fcard:last-of-type{border-bottom:none}
+  .fcard-head{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .fcard-head .fc-nm{font-family:"Noto Serif TC",serif;font-size:19px;font-weight:700;color:var(--ink);line-height:1}
+  .fcard-head .fc-fn{font-size:13px;color:var(--ink-faint);flex:1}
+  .fc-desc{margin:0;font-size:14px;line-height:1.7;color:var(--ink-soft)}
+  .fc-rest{margin:12px 0 0;font-size:12.5px;color:var(--ink-faint);text-align:center}
+  .tag{flex:none;font-size:11px;padding:2px 9px;border-radius:999px}
+
+  .change{display:flex;align-items:center;gap:12px;font-family:"Noto Serif TC",serif;font-size:24px;color:var(--accent);justify-content:center;margin:4px 0 12px}
+  .change .arrow{font-size:18px;color:var(--ink-faint)}
+  .change-text{text-align:center;font-size:14px;color:var(--ink-soft)}
+  .to-explain{margin-top:14px;padding:12px 14px;background:var(--accent-soft);border-radius:12px;text-align:center}
+  .to-explain .to-name{display:block;font-family:"Noto Serif TC",serif;font-size:15px;color:var(--accent);margin-bottom:4px}
+  .to-explain .to-desc{font-size:13px;color:var(--ink-soft);line-height:1.6}
+  .reminder{text-align:center;font-family:"Noto Serif TC",serif;font-size:17px;line-height:1.7;color:var(--ink);padding:6px 6px 2px}
+  .reminder .qm{color:var(--accent);font-size:22px}
+  .disclaimer{font-size:11.5px;color:var(--ink-faint);text-align:center;margin:24px 0 0;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><span class="logo">問易</span><span class="sub">JOIN TO ENJOY</span></header>
+  <p class="tagline">借古人的易經智慧，照見此刻的自己。<br>不是預測命運，而是讀懂當下、辨識下一步。</p>
+  <div class="progress" id="progress"></div>
+  <div id="app"></div>
+</div>
+<div class="bar" id="bar"></div>
+
+<script>
+/* ============================================================
+   問易 v2 原型 · 三態（好／中性／缺乏）+ 回放確認
+   邏輯對應「v2 判讀邏輯修正建議」。改資料表即可調判讀。
+   ============================================================ */
+const BAGUA={qian:"乾",kun:"坤",zhen:"震",gen:"艮",kan:"坎",li:"離",xun:"巽",dui:"兌"};
+/* 八卦功能說明（功能定位 / 過強 / 不足）— 文字先用此版，內涵後續再細修 */
+const BAGUA_INFO={
+ qian:{fn:"創造／決策",over:"控制欲、獨斷、脫離現實",under:"缺方向、缺願景"},
+ dui:{fn:"交流／分享",over:"過度社交、討好、空談",under:"封閉、不願表達"},
+ li:{fn:"顯現／覺察",over:"過度分析、想太多",under:"看不清方向"},
+ xun:{fn:"擴散／連結",over:"擴張失控、分心",under:"缺資源連結"},
+ zhen:{fn:"啟動／突破",over:"衝動、焦躁、停不下來",under:"拖延、不敢開始"},
+ kan:{fn:"收藏／恢復",over:"內耗、逃避、過度退縮",under:"不會休息、不會恢復"},
+ gen:{fn:"停止／界線",over:"固執、停滯、不變通",under:"無法停止、無法拒絕"},
+ kun:{fn:"承載／滋養",over:"過度承擔、失去自我",under:"缺耐心、缺穩定"},
+};
+const TOPICS=["最近的自己","工作或決策","關係狀態","情緒與壓力","卡住與下一步","今日狀態覺察","自由提問"];
+
+/* ---- Step2 複選（八卦加減分）v3：八大類 × 三態 ---- */
+const STATEMENT_GROUPS=[
+ {label:"推進與決定",items:[
+   ["我最近推得動事情，方向也算清楚",{qian:2}],
+   ["做決定對我來說還算順手",{qian:1,li:1}],
+   ["凡事我都想自己掌控，有點停不下來",{qian:2,kan:1}],
+   ["很多事都得靠我扛，放不太下",{qian:2,gen:-1,kan:1}],
+   ["我最近沒什麼方向，也提不起主張",{qian:-2}]]},
+ {label:"承接與照顧",items:[
+   ["我照顧人、承接事情，還算有餘裕",{kun:2,gen:1}],
+   ["我承接太多，快把自己賠進去了",{kun:2,gen:-1}],
+   ["別人的需求我幾乎都接，很難拒絕",{kun:1,gen:-1}],
+   ["我最近有點接不住，撐得很勉強",{kun:-2}],
+   ["我靜不下來，也穩不太住",{kun:-1,gen:-1}]]},
+ {label:"啟動與行動",items:[
+   ["我最近想做就動得起來",{zhen:2}],
+   ["我有點靜不住，一直想衝、停不下來",{zhen:2,gen:-1}],
+   ["我容易衝動，急著馬上開始",{zhen:2,qian:1}],
+   ["我知道該動，卻一直拖著",{zhen:-2}],
+   ["我有點不敢開始",{zhen:-1,kan:1}]]},
+ {label:"停止與界線",items:[
+   ["我停得下來，也守得住界線",{gen:2}],
+   ["需要的時候，我能對人說不",{gen:1,dui:1}],
+   ["我有點固執、放不下，不太變通",{gen:2,xun:-1}],
+   ["我把自己封起來，不太想往前",{gen:2,kan:1}],
+   ["我很難停下來，也很難拒絕",{gen:-2}]]},
+ {label:"休息與恢復",items:[
+   ["累的時候，我懂得讓自己緩一緩",{gen:1,kan:1}],
+   ["我一直很累、提不起勁",{kan:2}],
+   ["我想逃避、退縮，不太想面對",{kan:2,gen:1}],
+   ["我累卻停不下來，沒真正休息過",{kan:1,gen:-1}],
+   ["我很久沒有好好放鬆了",{kan:1}]]},
+ {label:"釐清與看見",items:[
+   ["我把事情看得挺清楚，判斷也算準",{li:2,zhen:1}],
+   ["我想太多、一直分析，停不下來想",{li:2,zhen:-1}],
+   ["我太執著於把每件事都弄明白",{li:2}],
+   ["我最近看不太清方向",{li:-2}],
+   ["有些事我說不清，也理不清",{li:-1}]]},
+ {label:"影響與連結",items:[
+   ["我懂得用柔性的方式去影響、推進",{xun:2}],
+   ["我能跟不同的人事物建立連結",{xun:1,dui:1}],
+   ["我攤得太開、有點分心，抓不住重點",{xun:2,gen:-1}],
+   ["我想兼顧太多方，反而散掉了",{xun:2,dui:1,gen:-1}],
+   ["我比較直，不太會轉彎找方法",{xun:-2}]]},
+ {label:"交流與表達",items:[
+   ["我跟人交流順暢，說得出也聽得進",{dui:2}],
+   ["我有點在意別人怎麼看，過度迎合",{dui:2,xun:-1}],
+   ["我講了很多，但有些是空談",{dui:2}],
+   ["我有話說不出口",{dui:-2}],
+   ["我把自己封閉起來，不太想表達",{dui:-2,gen:1}]]},
+];
+
+/* ---- 打架時的鑑別題：當前兩名卦分數接近，用一題打在兩卦的語意分界 ----
+   key 用兩卦名排序後 join，與順序無關；每個選項標明指向哪一卦 ---- */
+const DISCRIM={
+ [["困","坎"].sort().join("|")]:{q:"你的「卡」，比較像哪一種？",opts:[
+   {label:"我其實有力氣，是外在被卡住、施展不開",hex:"困"},
+   {label:"是我心裡有壓力、不安，放不太下",hex:"坎"}]},
+ [["艮","節"].sort().join("|")]:{q:"你需要的，比較像哪一種？",opts:[
+   {label:"我需要整個停下來，按下暫停",hex:"艮"},
+   {label:"不用全停，只是要把份量和界線抓好",hex:"節"}]},
+ [["坎","節"].sort().join("|")]:{q:"你的累，比較像哪一種？",opts:[
+   {label:"是事情接太多、停不下來造成的",hex:"節"},
+   {label:"是心裡的壓力、情緒造成的",hex:"坎"}]},
+ [["比","訟"].sort().join("|")]:{q:"關係這塊，你現在比較想要？",opts:[
+   {label:"先把對立、立場的事講清楚",hex:"訟"},
+   {label:"先找回支持、把人連起來",hex:"比"}]},
+ [["困","節"].sort().join("|")]:{q:"你卡住的點，比較像哪一種？",opts:[
+   {label:"是外在資源或環境把我卡住了",hex:"困"},
+   {label:"是我自己接太多，需要設界線",hex:"節"}]},
+ [["未濟","離"].sort().join("|")]:{q:"你現在比較像哪一種？",opts:[
+   {label:"主要是還沒看清、需要釐清",hex:"離"},
+   {label:"是還在轉換中、過渡還沒結束",hex:"未濟"}]},
+ [["復","井"].sort().join("|")]:{q:"你現在比較像哪一種？",opts:[
+   {label:"已經有一點生機，想重新開始",hex:"復"},
+   {label:"需要先接回穩定的資源與補給",hex:"井"}]},
+};
+
+/* ---- Step3 追問：只測維度，不直接點卦 ---- */
+const FOLLOWUPS=[
+ {id:"motion",eyebrow:"動 或 靜",q:"你現在比較接近哪一種？",opts:[
+   ["該動就動、該停就停，還算抓得住","H"],
+   ["想動，但動不起來","A"],["一直在動，但停不下來","B"],["不確定該動還是該停","C"],
+   ["知道該停，但不敢停","D"],["知道該動，但還沒準備好","E"]]},
+ {id:"source",eyebrow:"內 或 外",q:"你現在的狀態，比較像哪一種？",opts:[
+   ["其實還算順，沒什麼卡的","G"],
+   ["外在條件限制","A"],["他人或關係阻力","B"],["自己內在還沒準備好","C"],
+   ["能量不足","D"],["方向不清楚","E"],["不是卡住，是節奏需要調整","F"]]},
+ {id:"surplus",eyebrow:"餘 裕（關鍵）",q:"你現在做這些事，比較像哪一種？",opts:[
+   ["還算游刃有餘","A"],["勉強撐著、有點吃力","B"],["已經有點透支","C"],["停不下來，像一直踩著油門","D"]]},
+];
+
+/* ---- Step4 自由文字關鍵詞 ---- */
+const KEYWORDS=[
+ [["累","疲"],{kan:1,kun:1}],[["亂"],{li:-1}],[["煩"],{li:-1,kan:1}],
+ [["怕","害怕","擔心"],{kan:2}],[["空","空虛"],{kan:1}],[["急"],{zhen:1,qian:1}],
+ [["悶"],{gen:1,kan:1}],[["推"],{qian:1,zhen:1}],[["撐"],{kun:2}],
+ [["躲","逃"],{gen:1,kan:1}],[["停"],{gen:1}],[["說"],{dui:1}],
+ [["卡","卡住"],{zhen:-1,kan:1}],[["失控"],{qian:1,gen:-1}],[["沒力","沒動力"],{kan:2}],[["壓力"],{kan:1}],
+];
+
+/* ---- 配套對：功能 → 健康條件。配套「在不在線」用絕對分數(s)判，不用相對z，較穩 ---- */
+const SUPPORT={
+ qian:{healthy:(z,s)=>s.kan<2},                  // 推進健康 = 沒明顯耗竭
+ kun:{healthy:(z,s)=>s.gen>=0},                  // 承接健康 = 界線沒缺
+ li:{healthy:(z,s)=>s.zhen>=0},                  // 分析健康 = 動得了
+ dui:{healthy:(z,s)=>s.xun>=0},                  // 表達健康 = 有方法、不硬說
+ zhen:{healthy:(z,s)=>s.gen>=0},                 // 啟動健康 = 能停得下
+ gen:{healthy:(z,s)=>s.xun>=0&&s.kan<2},         // 停止健康 = 不固執、不封閉
+ xun:{healthy:(z,s)=>s.gen>=0},                  // 擴散健康 = 有收束
+};
+
+/* ---- 功能層三態文案 ---- */
+const GOOD_FUNC={
+ qian:"你推得動事情，主導力是你現在的資源。",
+ kun:"你撐得住，而且照顧人對你來說還有餘裕。",
+ zhen:"你啟動得了，想做就動得起來。",
+ gen:"你停得下來，也守得住界線——這其實是難得的能力。",
+ li:"你看得很清楚，判斷是你現在的強項。",
+ xun:"你懂得用柔性的方式推進，不硬碰。",
+ dui:"你沒把自己關起來，還在跟人連結。",
+};
+const ADJ_FUNC={
+ qian_over:"你一直在主導，有點停不下來。",
+ kun_over:"你承接太多，界線沒跟上，承接開始變成消耗。",
+ li_over:"你分析得太用力，卡在「想」、還沒動。",
+ dui_over:"你有點過度外求，把重心放在別人的反應上。",
+ zhen_over:"你太躁動，靜不太下來。",
+ gen_over:"你有點固執、放不太下，較難變通或鬆手。",
+ xun_over:"你攤得太開、有點分心，反而抓不住重點。",
+ kan_over:"你壓力累積得不少，還沒真正恢復。",
+ gen_under:"你很難停下來，界線不太夠。",
+ dui_under:"你把話悶在心裡，不太說得出口。",
+ xun_under:"你比較直，還沒找到轉彎的方式。",
+ li_under:"你對方向還看不太清楚。",
+ zhen_under:"你想動，卻動不太起來。",
+ kun_under:"你有點接不住，撐得有些勉強。",
+ qian_under:"你暫時抓不到方向、少了一點主張。",
+};
+/* ---- 主力功能說明（顯示在「你的主力」，比一句肯定更深一點）---- */
+const MAIN_FUNC={
+ qian:"你推得動事情、做得了決定，主導力是你現在最好用的本錢。可以多靠它去開局、定方向。",
+ kun:"你承接、照顧得很穩，而且還有餘裕。這份穩定是別人會想靠近你的原因，記得也留一份給自己。",
+ zhen:"你啟動得了，想做就動得起來。趁這股勁，把想做的事真的推出去。",
+ gen:"你停得下來、守得住界線，這在現在很難得。可以多用它幫自己擋掉不必要的消耗。",
+ li:"你看得清楚、判斷得準，這是你現在的強項。可以多相信自己的觀察，再帶著它去行動。",
+ xun:"你懂得用柔性的方式影響、連結，不硬碰。這讓你能繞過很多硬碰硬的消耗。",
+ dui:"你跟人是連著的、表達得出來。這份連結是你的底氣，難的時候它接得住你。",
+};
+
+/* ---- 13 卦池（含好態卦）+ 三態文案 ---- */
+const POOL_GOOD=["泰","復","井","比"];
+const HEX={
+ 泰:{theme:"流通與順勢",state:{good:"你現在的狀態是打開、流通的，事順、人也順。",neutral:"你正走在打開的路上，開始有流通的感覺。",lack:"你想要流通，但還沒真的通起來。"},
+   change:["泰","守住這份流通的節奏。"],action:["趁順的時候，把基礎打穩。","把現在的好狀態記下來，知道怎麼回到這裡。"],
+   breath:"自然呼吸，好好享受順暢。",reminder:{good:"順的時候，也是打地基的時候。",default:"先打通一個點，流通就會回來。"}},
+ 復:{theme:"回返與新生",state:{good:"一點生機回來了，你正走在好轉的路上。",neutral:"你開始有一點力氣，正慢慢回來。",lack:"你還很虛，但已經想重新開始了。"},
+   change:["復","順著這一點生機，慢慢回來，別逼自己滿血。"],action:["只做一件能讓自己有點力氣的小事。","允許自己慢慢來。"],
+   breath:"溫和深呼吸，感覺力氣一點點回流。",reminder:{good:"復原從一小點開始，你做得很好。",default:"復原從一小點開始。"}},
+ 井:{theme:"回到資源",state:{good:"你已經回到自己的資源裡，穩住了。",neutral:"你正在把資源接回來。",lack:"你一直在輸出，需要回到補給。"},
+   change:["復","先補回資源，再談行動。"],action:["回到一個固定能補充你的習慣或關係。","今天做一件「補水」的事。"],
+   breath:"深慢呼吸，像把水重新打上來。",reminder:{good:"井養得好，隨時有水可用。",default:"先把井養回來，才有水可用。"}},
+ 比:{theme:"連結與支持",state:{good:"你跟人是連著的，有支持、有歸屬，這是你的底氣。",neutral:"你正在把身邊的人連起來。",lack:"你習慣一個人撐，還沒把人連起來。"},
+   change:["泰","把連結建立起來，局面就會更流通。"],action:["主動找一個可以同盟的人說說。","讓別人有機會幫你。"],
+   breath:"呼吸後，加一句此刻想說的話。",reminder:{good:"你不是一個人，這份連結要繼續。",default:"你不需要一個人扛。"}},
+ 需:{theme:"蓄力等待",state:{good:"你懂得等，現在的等待是在蓄力。",neutral:"你在等一個時機，現在還不能急。",lack:"你想推進，但時機條件還沒到，有點焦躁。"},
+   change:["漸","從等待，轉為一點一點漸進累積。"],action:["今天先準備、不強推。","把「等待」當成一項任務來做。"],
+   breath:"平穩呼吸，練習安住於等待。",reminder:{good:"你等得住，這是穩的力量。",default:"等待不是停滯，是在蓄力。"}},
+ 漸:{theme:"漸進發展",state:{good:"你抓到了這件事該有的節奏，一步一步來。",neutral:"你正在學著慢慢推進。",lack:"你想快，但這件事需要時間，急也急不來。"},
+   change:["漸","順著節奏，慢慢推進。"],action:["把目標切成每天能做一點的小段。","只看下一步，不看全程。"],
+   breath:"緩慢均勻呼吸，配合慢的節奏。",reminder:{good:"慢，是你選對的速度。",default:"慢，是這件事該有的速度。"}},
+ 未濟:{theme:"過渡與未完成",state:{good:"你在轉換之中，而且方向感是清楚的。",neutral:"你還在路上，過渡期還沒結束。",lack:"你卡在中間，既不上也不下，有點懸著。"},
+   change:["離","先把還沒完成的，理出下一個小目標。"],action:["接受還沒完成，先理清下一個小目標。","別逼自己馬上有結論。"],
+   breath:"穩定呼吸，安住於「還在路上」。",reminder:{good:"你清楚自己在往哪走。",default:"還沒完成，不代表做不到。"}},
+ 離:{theme:"看見與辨識",state:{good:"你看得很清楚，判斷力是你現在的強項。",neutral:"你正在把事情看清楚。",lack:"你分析得有點過頭，卡在想、還沒動。"},
+   change:["漸","看清楚之後，挑一小步先做。"],action:["把想清楚的事，寫下三行就好。","設一個「停止分析」的時間點。"],
+   breath:"閉眼感受呼吸，暫時減少分析。",reminder:{good:"你看得很準，記得也要回到行動。",default:"看清楚，是為了行動，不是為了完美。"}},
+ 節:{theme:"界線與節奏",state:{good:"你已經在有意識地替自己設界線了，這件事做得不錯。",neutral:"你正在學著拿捏界線與節奏。",lack:"你承接過多、停不下來，系統開始消耗。"},
+   change:["復","先節制消耗，再恢復生機。"],action:["今天不新增承諾。","把手上的事分成：必須做、可延後、可拒絕。"],
+   breath:"延長吐氣，練習收束。",reminder:{good:"你抓界線抓得不錯，繼續守住。",default:"節制不是縮小自己，是讓能量回到正確流向。"}},
+ 困:{theme:"有力難施",state:{good:"你被困住，但你很清楚自己還有力氣。",neutral:"你有力氣，但暫時施展不開。",lack:"你被困住、資源不流通，硬衝也衝不動。"},
+   change:["井","不硬衝，先回到穩定的資源。"],action:["先盤點還能動用的資源與支持。","把力氣收回來，別撞牆。"],
+   breath:"沉穩呼吸，把力氣收回身體裡。",reminder:{good:"你知道力氣還在，這很重要。",default:"困住的時候，先回井，不要硬撞牆。"}},
+ 坎:{theme:"壓力與風險",state:{good:"你在壓力裡，但你願意正視它，這需要勇氣。",neutral:"你正承受著一些壓力與不安。",lack:"你陷在較深的壓力或情緒裡，難以真正休息。"},
+   change:["井","從壓力深處，先回到資源與安全感。"],action:["找回一個讓你覺得安全的人事物。","先求穩，不求快。"],
+   breath:"深而慢的呼吸，慢慢恢復安全感。",reminder:{good:"你願意正視壓力，這就是力量。",default:"在水裡，先找到能踩到的底。"}},
+ 艮:{theme:"停止與重置",state:{good:"你停得下來，這份「能停」其實是難得的能力。",neutral:"你正在學著停下來。",lack:"你停不下來，界線不足，需要刻意喊停。"},
+   change:["復","先停止消耗，再讓生機回來。"],action:["今天刻意停掉一件事，什麼都不做。","給自己一段不被打擾的時間。"],
+   breath:"停頓式呼吸：吸—停—吐—停。",reminder:{good:"你懂得停，這很好。",default:"停下來不是放棄，是重置。"}},
+ 訟:{theme:"衝突與對立",state:{good:"你在處理衝突，而且願意面對、不逃避。",neutral:"你正處在一些立場或關係的拉扯裡。",lack:"你卡在對立中，想爭想辯，但越爭越僵。"},
+   change:["比","從對立，轉向支持與連結。"],action:["先聽懂對方要什麼，再表達自己。","把事情和情緒分開處理。"],
+   breath:"吐氣時放鬆下顎與肩膀，鬆開防備。",reminder:{good:"你願意面對衝突，這不容易。",default:"贏了道理，未必贏了關係。"}},
+};
+
+/* ============================================================ 引擎 */
+function computeBagua(state){
+ const s={};for(const k in BAGUA)s[k]=0;
+ state.selected.forEach(([_,d])=>{for(const k in d)s[k]+=d[k];});
+ KEYWORDS.forEach(([w,d])=>{if(w.some(x=>state.freeText.includes(x)))for(const k in d)s[k]+=d[k];});
+ return s;
+}
+function zscores(s){
+ const v=Object.values(s),mean=v.reduce((a,b)=>a+b,0)/v.length;
+ const sd=Math.sqrt(v.reduce((a,b)=>a+(b-mean)**2,0)/v.length)||1;
+ const z={};for(const k in s)z[k]=(s[k]-mean)/sd;
+ return {z,sd,mean};
+}
+/* 功能層三態：good / neutral / over / under
+   under 需同時「相對很低」且「真的有勾到負向句(raw<0)」，避免沒用到的功能被誤判不足 */
+function functionQualities(z,s){
+ const q={};
+ const HIGH=3; // 絕對量門檻：要真的「用了很多」才可能算過度，避免相對最高就被冤枉
+ for(const k in z){
+   const val=z[k],raw=s[k];
+   if(k==="kan"){ // 坎：壓力高且量夠=過度；很低且有勾負向=不足
+     q[k]=(val>=0.7&&raw>=HIGH)?"over":(val<=-0.6&&raw<0?"under":"neutral");continue;}
+   if(SUPPORT[k]){
+     if(val>=0.6){
+       if(SUPPORT[k].healthy(z,s))q[k]="good";        // 相對高 + 有配套 = 健康（可當主力）
+       else if(raw>=HIGH)q[k]="over";               // 相對高 + 缺配套 + 絕對量大 = 過度
+       else q[k]="neutral";                          // 缺配套但量不大 = 還好，不算過度
+     }
+     else if(val<=-0.6&&raw<0)q[k]="under";
+     else q[k]="neutral";
+   }else q[k]="neutral";
+ }
+ return q;
+}
+/* 整體基調：失衡(lack)主要由「過度」觸發；單純某功能低不算失衡（常只是沒用到）*/
+function overallTone(q,sd,surplus){
+ const hasOver=Object.values(q).some(v=>v==="over");
+ const flat=sd<1.1;
+ let tone;
+ if(surplus==="C"||surplus==="D")tone="lack";   // 透支 或 過熱踩油門 = 失衡
+ else if(surplus==="A")tone=hasOver?"neutral":"good";
+ else tone=hasOver?"lack":(flat?"good":"neutral");
+ return tone;
+}
+/* 主卦候選 */
+function pickHex(state,z,tone){
+ const cand={};const add=(n,v)=>cand[n]=(cand[n]||0)+v;
+ const hi=k=>z[k]>=0.5,lo=k=>z[k]<=-0.5;
+ // 八卦組合 → 13卦
+ if(hi("kun")&&lo("gen"))add("節",3);
+ if(hi("qian")&&lo("gen"))add("節",1);
+ if(hi("kan")&&lo("zhen")){add("困",2);add("坎",2);}
+ if(hi("kan"))add("坎",1);
+ if(hi("gen")&&lo("zhen"))add("艮",2);
+ if(hi("gen"))add("艮",1);
+ if(lo("dui"))add("訟",1);
+ if(hi("li"))add("離",2);
+ if(hi("li")&&lo("kan"))add("未濟",1);
+ if(hi("xun"))add("漸",1);
+ if(hi("dui"))add("比",1);
+ if(hi("kun")&&hi("dui"))add("比",2);
+ // 維度
+ const f=id=>{const i=FOLLOWUPS.findIndex(x=>x.id===id);return state.followups[i]&&state.followups[i].val;};
+ const m=f("motion"),src=f("source"),sp=f("surplus");
+ ({H:()=>{add("泰",2);add("復",1);},
+   A:()=>add("困",2),B:()=>{add("節",2);add("艮",1);},C:()=>add("未濟",2),
+   D:()=>{add("節",1);add("艮",1);},E:()=>{add("需",2);add("復",1);}}[m]||(()=>{}))();
+ ({G:()=>{add("泰",2);add("比",1);},
+   A:()=>add("困",2),B:()=>{add("訟",2);add("比",1);},C:()=>{add("需",1);add("未濟",1);},
+   D:()=>{add("坎",2);add("井",1);add("復",1);},E:()=>{add("離",2);add("未濟",1);},
+   F:()=>{add("漸",2);add("需",1);add("節",1);}}[src]||(()=>{}))();
+ ({A:()=>{add("泰",2);add("比",1);add("復",1);},C:()=>{add("節",1);add("困",1);add("坎",1);add("艮",1);},
+   D:()=>{add("節",2);add("艮",1);}}[sp]||(()=>{}))();
+
+ if(!Object.keys(cand).length)add("離",1);
+ let ranked=Object.keys(cand).sort((a,b)=>cand[b]-cand[a]);
+ // 好基調 → 優先讓好態卦勝出（若有分）
+ if(tone==="good"){
+   const g=ranked.filter(h=>POOL_GOOD.includes(h));
+   if(g.length)ranked=[...g,...ranked.filter(h=>!POOL_GOOD.includes(h))];
+   else ranked=["泰",...ranked];
+ }
+ const main=ranked[0];
+ const sec=ranked.find(h=>h!==main)||(POOL_GOOD.includes(main)?"復":"井");
+ // 是否打架（前兩名接近）
+ const close=ranked.length>1&&Math.abs((cand[ranked[0]]||0)-(cand[ranked[1]]||0))<=1;
+ return {main,sec,close};
+}
+/* 你做得好的地方（必有）*/
+function findHighlight(q,z){
+ const goods=Object.keys(q).filter(k=>q[k]==="good");
+ if(goods.length){goods.sort((a,b)=>z[b]-z[a]);return GOOD_FUNC[goods[0]];}
+ // 沒有 good：挑最高、且非負面的功能溫和肯定
+ const pos=Object.keys(z).filter(k=>q[k]==="neutral"&&z[k]>=0).sort((a,b)=>z[b]-z[a]);
+ if(pos.length&&GOOD_FUNC[pos[0]])return GOOD_FUNC[pos[0]].replace("是你現在的資源","還在線").replace("，這其實是難得的能力","");
+ return "你願意停下來，看一看自己現在的狀態——這一步本身就值得肯定。";
+}
+/* 可以微調的地方 */
+function findAdjust(q){
+ const out=[];
+ for(const k in q){
+   if(q[k]==="over"&&ADJ_FUNC[k+"_over"])out.push(ADJ_FUNC[k+"_over"]);
+   if(q[k]==="under"&&ADJ_FUNC[k+"_under"])out.push(ADJ_FUNC[k+"_under"]);
+ }
+ return out.slice(0,3);
+}
+function runEngine(state){
+ const s=computeBagua(state);
+ const {z,sd}=zscores(s);
+ const q=functionQualities(z,s);
+ const sp=(()=>{const i=FOLLOWUPS.findIndex(x=>x.id==="surplus");return state.followups[i]&&state.followups[i].val;})();
+ const tone=overallTone(q,sd,sp);
+ const {main,sec,close}=pickHex(state,z,tone);
+ return {s,z,q,tone,main,sec,close,highlight:findHighlight(q,z),adjust:findAdjust(q)};
+}
+
+/* ============================================================ 畫面 */
+const state={step:0,topic:null,selected:[],followups:[],freeText:"",result:null,confirm:null,activeHex:null};
+const app=document.getElementById("app"),bar=document.getElementById("bar"),prog=document.getElementById("progress");
+const STEPS=6; // 主題/複選/追問/自由/回放/報告
+let lastStep=-1;
+function renderProgress(){prog.innerHTML="";for(let i=0;i<STEPS;i++){const b=document.createElement("i");if(i<=state.step)b.className="on";prog.appendChild(b);}}
+function render(){
+ renderProgress();app.innerHTML="";bar.innerHTML="";
+ [renderTopic,renderSelect,renderFollowups,renderFree,renderReplay,renderReport][state.step]();
+ if(state.step!==lastStep){window.scrollTo({top:0,behavior:"smooth"});lastStep=state.step;}
+}
+function updateBar(label,enabled){const b=bar.querySelector(".btn-primary");if(b){b.textContent=label;b.disabled=!enabled;}}
+function stepEl(eb,q,hint){const d=document.createElement("div");d.className="step";
+ d.innerHTML=`<div class="q-eyebrow">${eb}</div><h2 class="q">${q}</h2>`+(hint?`<p class="q-hint">${hint}</p>`:"");return d;}
+function barEl(label,enabled,onNext,backable){
+ const inner=document.createElement("div");inner.className="bar-inner";
+ if(backable){const b=document.createElement("button");b.className="btn-ghost";b.textContent="上一步";
+   b.onclick=()=>{state.step--;render();};inner.appendChild(b);}
+ const b=document.createElement("button");b.className="btn btn-primary";b.textContent=label;b.disabled=!enabled;b.onclick=onNext;inner.appendChild(b);
+ bar.appendChild(inner);
+}
+
+function renderTopic(){
+ const d=stepEl("STEP 1","你今天想問哪一類狀態？","選一個方向開始。");
+ TOPICS.forEach(t=>{const o=document.createElement("button");o.className="opt"+(state.topic===t?" sel":"");
+   o.innerHTML=`<span class="mark"></span><span>${t}</span>`;o.onclick=()=>{state.topic=t;render();};d.appendChild(o);});
+ app.appendChild(d);barEl("開始",!!state.topic,()=>{state.step=1;render();},false);
+}
+function renderSelect(){
+ const d=stepEl("STEP 2","最近的你，哪些比較接近？","挑有感的就好，不必每項都選；某一類完全沒有，也沒關係。剛剛沒選到、想補充的，下一步還能自由寫。");
+ STATEMENT_GROUPS.forEach(g=>{
+   const lab=document.createElement("div");lab.className="group-label";lab.textContent=g.label;d.appendChild(lab);
+   g.items.forEach(([text,delta])=>{
+     const picked=state.selected.some(([t])=>t===text);
+     const o=document.createElement("button");o.className="opt"+(picked?" sel":"");
+     o.innerHTML=`<span class="mark"></span><span>${text}</span>`;
+     o.onclick=()=>{const p=state.selected.some(([t])=>t===text);
+       if(p)state.selected=state.selected.filter(([t])=>t!==text);else state.selected.push([text,delta]);
+       o.classList.toggle("sel");updateBar(`下一步（已選 ${state.selected.length}）`,state.selected.length>0);};
+     d.appendChild(o);});
+ });
+ app.appendChild(d);barEl(`下一步（已選 ${state.selected.length}）`,state.selected.length>0,()=>{state.step=2;render();},true);
+}
+function renderFollowups(){
+ const d=document.createElement("div");d.className="step";
+ d.innerHTML=`<div class="q-eyebrow">STEP 3</div><h2 class="q">幾個關鍵追問</h2><p class="q-hint">每題選一個最接近的。</p>`;
+ FOLLOWUPS.forEach((fq,qi)=>{
+   const block=document.createElement("div");block.style.marginTop=qi?"26px":"14px";
+   block.innerHTML=`<div class="group-label" style="margin-top:0">${fq.eyebrow}</div>
+     <div style="font-size:15px;margin:0 0 12px;color:var(--ink)">${fq.q}</div>`;
+   fq.opts.forEach(([text,val])=>{
+     const picked=state.followups[qi]&&state.followups[qi].val===val;
+     const o=document.createElement("button");o.className="opt"+(picked?" sel":"");
+     o.innerHTML=`<span class="mark"></span><span>${text}</span>`;
+     o.onclick=()=>{state.followups[qi]={val};block.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));o.classList.add("sel");
+       updateBar("下一步",FOLLOWUPS.every((_,i)=>state.followups[i]));};
+     block.appendChild(o);});
+   d.appendChild(block);});
+ app.appendChild(d);
+ barEl("下一步",FOLLOWUPS.every((_,i)=>state.followups[i]),()=>{state.step=3;render();},true);
+}
+function renderFree(){
+ const d=stepEl("STEP 4","用幾句話補充你現在最想理解的狀態","可留空。剛剛沒選到、或選項裡沒有的，都可以寫在這——寫得越貼近你，判讀越準。");
+ const ta=document.createElement("textarea");
+ ta.placeholder="例如：我最近工作很多，很多事都要我決定，但其實很累，又不太敢停下來⋯⋯";
+ ta.value=state.freeText;ta.oninput=e=>state.freeText=e.target.value;
+ d.appendChild(ta);app.appendChild(d);
+ barEl("看看我現在的狀態",true,()=>{state.result=runEngine(state);state.step=4;render();},true);
+}
+/* 回放確認（打架且有鑑別題 → 改問一題鑑別） */
+function renderReplay(){
+ const r=state.result,M=HEX[r.main];
+ const discKey=[r.main,r.sec].sort().join("|");
+ const disc=r.close?DISCRIM[discKey]:null;
+
+ if(disc){
+   const d=stepEl("STEP 5","還差一步就能對焦","你的狀態落在兩個卦之間，這一題幫你分清楚是哪一個。");
+   const box=document.createElement("div");box.className="replay";
+   box.innerHTML=`<p class="lead">你現在比較像 <span class="hexname">${r.main}</span>，也帶著 <span class="hexname">${r.sec}</span> 的成分。</p>`+
+     `<p class="lead" style="font-size:14px;color:var(--ink-soft);margin-top:8px">${disc.q}</p>`;
+   d.appendChild(box);
+   const lab=document.createElement("div");lab.className="group-label";lab.textContent="選一個最接近的";d.appendChild(lab);
+   disc.opts.forEach(o=>{
+     const b=document.createElement("button");b.className="opt"+(state.confirm==="yes"&&state.activeHex===o.hex?" sel":"");
+     b.innerHTML=`<span class="mark"></span><span>${o.label}</span>`;
+     b.onclick=()=>{state.confirm="yes";state.activeHex=o.hex;d.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");updateBar("看完整報告",true);};
+     d.appendChild(b);
+   });
+   // 第三條：兩種都有一點 → 介於（報告顯示可切換）
+   const both=document.createElement("button");both.className="opt"+(state.confirm==="partial"?" sel":"");
+   both.innerHTML=`<span class="mark"></span><span>兩種都有一點，分不太出來</span>`;
+   both.onclick=()=>{state.confirm="partial";state.activeHex=null;d.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));both.classList.add("sel");updateBar("看完整報告",true);};
+   d.appendChild(both);
+   app.appendChild(d);
+   barEl("看完整報告",!!state.confirm,()=>{state.step=5;render();},true);
+   return;
+ }
+
+ // 一般回放
+ const d=stepEl("STEP 5","在給你完整的狀態之前⋯","這份結果是你一路選出來的，先讓你確認方向對不對。");
+ const box=document.createElement("div");box.className="replay";
+ box.innerHTML=`<p class="lead">我先讀到，你現在比較像 <span class="hexname">${r.main}（${M.theme}）</span>。</p>`+
+   `<p class="lead" style="color:var(--ink-soft);font-size:14px;margin-top:8px">${M.state[r.tone]}</p>`;
+ d.appendChild(box);
+ const lab=document.createElement("div");lab.className="group-label";lab.textContent="這個方向，對你來說？";d.appendChild(lab);
+ [["蠻準的","yes"],["有一點，但不完全","partial"],["不太像","no"]].forEach(([text,val])=>{
+   const o=document.createElement("button");o.className="opt"+(state.confirm===val?" sel":"");
+   o.innerHTML=`<span class="mark"></span><span>${text}</span>`;
+   o.onclick=()=>{state.confirm=val;state.activeHex=null;d.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));o.classList.add("sel");updateBar("看完整報告",true);};
+   d.appendChild(o);});
+ app.appendChild(d);
+ barEl("看完整報告",!!state.confirm,()=>{state.step=5;render();},true);
+}
+/* 報告 */
+function renderReport(){
+ const r=state.result;
+ const pair=(state.confirm==="partial")?[r.main,r.sec]:null;
+ let mainHex=state.activeHex||(state.confirm==="no"?r.sec:r.main);
+ const M=HEX[mainHex];
+ const tone=r.tone;
+ const toneInfo={good:["流通態","tone-good","b-good"],neutral:["過渡態","tone-neutral","b-neutral"],lack:["失衡態","tone-lack","b-lack"]}[tone];
+ const d=document.createElement("div");d.className="step report";
+
+ d.innerHTML=`<div class="tone-badge ${toneInfo[1]}"><span class="dot"></span>整體：${toneInfo[0]}</div>`;
+
+ // 介於兩卦時：可點切換
+ if(pair){
+   const sw=document.createElement("div");sw.className="hex-switch";
+   sw.innerHTML=`<span class="sw-hint">你介於這兩卦之間，點點看哪個更貼近你：</span>`;
+   const tags=document.createElement("div");tags.className="sw-tags";
+   pair.forEach(h=>{
+     const b=document.createElement("button");
+     b.className="sw-tag"+(h===mainHex?" on":"");
+     b.innerHTML=`<span class="g">${h}</span><span class="t">${HEX[h].theme}</span>`;
+     b.onclick=()=>{state.activeHex=h;render();};
+     tags.appendChild(b);
+   });
+   sw.appendChild(tags);
+   d.appendChild(sw);
+ }
+
+ const hc=document.createElement("div");hc.className="hex-card "+toneInfo[2];
+ hc.innerHTML=`<span class="glyph">${mainHex}</span><div class="lab">${pair?"你選擇的主卦":"你目前的主卦"}</div>
+   <h2 class="name">${mainHex}</h2><div class="theme">${M.theme}</div>
+   <div class="state">${M.state[tone]}</div>`;
+ d.appendChild(hc);
+
+ // 你做得好的地方（必有，置前）
+ const good=document.createElement("div");good.className="panel good-panel";
+ good.innerHTML=`<h3>你做得好的地方</h3><p>${r.highlight}</p>`;
+ d.appendChild(good);
+
+ // 可以微調的地方（流通態省略）
+ if(tone!=="good"&&r.adjust.length){
+   const adj=document.createElement("div");adj.className="panel";
+   adj.innerHTML=`<h3>可以微調的地方</h3><ul>${r.adjust.map(a=>`<li>${a}</li>`).join("")}</ul>`;
+   d.appendChild(adj);
+ }
+
+ // 功能重點：只挑主力與需要留意，不全部攤開
+ const bp=document.createElement("div");bp.className="panel";
+ const goods=Object.keys(r.q).filter(k=>r.q[k]==="good").sort((a,b)=>r.s[b]-r.s[a]);
+ let mains=goods.filter(k=>r.s[k]>=2).slice(0,2);
+ if(!mains.length){ // 沒有明顯主力 → 取相對最高、非負面的功能溫和肯定
+   const cand=Object.keys(r.s).filter(k=>r.q[k]!=="over"&&r.q[k]!=="under"&&r.s[k]>0).sort((a,b)=>r.s[b]-r.s[a]);
+   if(cand.length)mains=[cand[0]];
+ }
+ const watch=Object.keys(r.q).filter(k=>(r.q[k]==="over"||r.q[k]==="under")).sort((a,b)=>Math.abs(r.z[b])-Math.abs(r.z[a])).slice(0,2);
+ const shown=new Set([...mains,...watch]);
+ const restCount=8-shown.size;
+
+ bp.innerHTML=`<h3>你現在的功能重點</h3>`;
+ const card=(k,role)=>{
+   const info=BAGUA_INFO[k];
+   let badgeCls,badgeTxt,desc;
+   if(role==="main"){badgeCls="t-good";badgeTxt="主力";desc=MAIN_FUNC[k]||GOOD_FUNC[k]||`你的「${info.fn}」還算在線。`;}
+   else{
+     badgeCls=r.q[k]==="over"?"t-over":"t-under";badgeTxt=r.q[k]==="over"?"偏多":"偏少";
+     const base=ADJ_FUNC[k+"_"+(r.q[k]==="over"?"over":"under")]||"";
+     const soft=tone==="good"?"目前整體是好的，這點若想更上一層可以留意。":"先放在心上就好，不用急著處理。";
+     desc=base+" "+soft;
+   }
+   const el=document.createElement("div");el.className="fcard";
+   el.innerHTML=`<div class="fcard-head"><span class="fc-nm">${BAGUA[k]}</span>
+     <span class="fc-fn">${info.fn}</span><span class="tag ${badgeCls}">${badgeTxt}</span></div>
+     <p class="fc-desc">${desc}</p>`;
+   return el;
+ };
+ mains.forEach(k=>bp.appendChild(card(k,"main")));
+ watch.forEach(k=>bp.appendChild(card(k,"watch")));
+ if(restCount>0){
+   const rest=document.createElement("p");rest.className="fc-rest";
+   rest.textContent=`其他 ${restCount} 項功能都在平穩範圍內。`;
+   bp.appendChild(rest);
+ }
+ d.appendChild(bp);
+
+ // 下一步方向（含目標卦的解釋，讓使用者看得懂）
+ const cp=document.createElement("div");cp.className="panel";
+ const toHex=M.change[0], toM=HEX[toHex];
+ const toExplain=toM?`<div class="to-explain"><span class="to-name">${toHex}｜${toM.theme}</span><span class="to-desc">${toM.state.neutral}</span></div>`:"";
+ cp.innerHTML=`<h3>下一步方向</h3>
+   <div class="change">${mainHex}<span class="arrow">→</span>${toHex}</div>
+   <div class="change-text">${M.change[1]}</div>
+   ${toExplain}
+   <p style="margin-top:12px;text-align:center;font-size:12px;color:var(--ink-faint)">這不是預言，是建議的調整路徑。</p>`;
+ d.appendChild(cp);
+
+ // 今日行動 + 呼吸
+ const ap=document.createElement("div");ap.className="panel";
+ ap.innerHTML=`<h3>今日行動建議</h3><ul>${M.action.map(a=>`<li>${a}</li>`).join("")}</ul>
+   <h3 style="margin-top:16px">呼吸覺察</h3><p>${M.breath}</p>`;
+ d.appendChild(ap);
+
+ // 一句提醒
+ const rm=document.createElement("div");rm.className="panel good-panel";rm.style.background="var(--accent-soft)";
+ const rtext=tone==="good"?(M.reminder.good||M.reminder.default):M.reminder.default;
+ rm.innerHTML=`<div class="reminder"><span class="qm">「</span>${rtext}<span class="qm">」</span></div>`;
+ d.appendChild(rm);
+
+ // 免責聲明：用 appendChild，不可用 innerHTML+=（會清掉前面所有按鈕的點擊事件）
+ const dis=document.createElement("p");dis.className="disclaimer";
+ dis.innerHTML=`問易提供的是一張「狀態地圖」，不是命運預言，也不能取代專業心理或醫療協助。<br>若你正承受難以承受的壓力，請讓信任的人或專業資源陪你一起看。`;
+ d.appendChild(dis);
+ app.appendChild(d);
+
+ const inner=document.createElement("div");inner.className="bar-inner";
+ const b=document.createElement("button");b.className="btn btn-primary";b.textContent="重新問一次";
+ b.onclick=()=>{Object.assign(state,{step:0,topic:null,selected:[],followups:[],freeText:"",result:null,confirm:null,activeHex:null});render();};
+ inner.appendChild(b);bar.appendChild(inner);
+}
+
+render();
+</script>
+</body>
+</html>
