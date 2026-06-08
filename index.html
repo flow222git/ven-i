@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>問易 v2 · 狀態鏡子</title>
+<title>問易 · 狀態鏡子</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
@@ -131,6 +131,19 @@
   .bagua-detail .bipolar{display:flex;flex-direction:column;gap:4px;padding-bottom:12px}
   .bagua-detail .bipolar span{color:var(--ink-faint);line-height:1.5}
   .bagua-detail .bipolar span.hl{color:var(--lack);font-weight:500}
+
+  /* 階段（時與位）面板 */
+  .stage-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .stage-head .stage-yao{font-family:"Noto Serif TC",serif;font-size:13px;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:1px 9px}
+  .stage-head .stage-nm{font-family:"Noto Serif TC",serif;font-size:18px;font-weight:700;color:var(--accent)}
+  .stage-head .stage-tone{margin-left:auto;font-size:12px;color:var(--ink-faint)}
+  .stage-res{margin-top:12px;padding:11px 13px;border-radius:12px;font-size:13.5px;line-height:1.6}
+  .stage-res .res-lab{display:block;font-size:11px;letter-spacing:.08em;margin-bottom:3px;opacity:.8}
+  .stage-res.res-yes{background:var(--good-soft);color:var(--good)}
+  .stage-res.res-no{background:var(--lack-soft);color:var(--lack)}
+  .stage-res.res-mid{background:var(--neutral-soft);color:var(--neutral)}
+  .stage-act{margin-top:12px;font-size:14.5px;line-height:1.7;color:var(--ink)}
+  .stage-act .act-lab{display:block;font-family:"Noto Serif TC",serif;font-size:13px;color:var(--accent);margin-bottom:3px}
 
   /* 功能重點卡 */
   .fcard{padding:13px 0;border-bottom:1px solid var(--line)}
@@ -273,7 +286,48 @@ const FOLLOWUPS=[
    ["還算游刃有餘","A"],["勉強撐著、有點吃力","B"],["已經有點透支","C"],["停不下來，像一直踩著油門","D"]]},
 ];
 
-/* ---- Step4 自由文字關鍵詞 ---- */
+/* ============================================================
+   第 2 層：時與位（A 版）
+   ============================================================ */
+/* 時題＋位題 */
+const STAGE_Q={id:"stage",eyebrow:"時 · 進展階段",q:"你想問的這件事，現在比較像哪一種？",opts:[
+  ["還在醞釀、準備，還沒真的動起來","A"],
+  ["已經開始動、正在累積，還算穩","B"],
+  ["正在做，但卡住了、有點吃力","C"],
+  ["快要成形了，到了要做關鍵決定的時候","D"],
+  ["好像有點過頭，或正在收尾了","E"]]};
+const POS_Q={id:"position",eyebrow:"位 · 你的位置",q:"在這件事上，你的位置比較接近？",opts:[
+  ["我主導、大致能決定","P1"],
+  ["我有一些影響，但不全是我說了算","P2"],
+  ["我影響很小，比較是配合或被決定的一方","P3"]]};
+
+/* 六爻階段定義 */
+const STAGES={
+ 1:{name:"萌芽",yao:"初爻",desc:"才剛開始、還很小",tone:"蓄勢、別躁進",hint:"別急著張揚或求成果，先培養、紮根。"},
+ 2:{name:"站穩",yao:"二爻",desc:"有基礎了、穩定累積",tone:"穩紮穩打",hint:"穩穩累積實力與信任，這是打底的時候。"},
+ 3:{name:"坎關",yao:"三爻",desc:"卡在半路、最容易出事",tone:"戒慎、別硬衝",hint:"最危險的關卡，先求不出錯，別在這裡硬推。"},
+ 4:{name:"進階",yao:"四爻",desc:"接近核心、面臨抉擇",tone:"謹慎進退",hint:"接近核心了，謹慎拿捏進退，挑關鍵的做。"},
+ 5:{name:"當位",yao:"五爻",desc:"時機好、你也在位子上",tone:"可大膽、好好發揮",hint:"時機最好、最能發揮，可以放手去做。"},
+ 6:{name:"過頂",yao:"上爻",desc:"到頂了、再衝會過頭",tone:"該收、該轉",hint:"再加碼會過頭，該收成或轉向了。"},
+};
+/* 應位：相應對與意義（初4 二5 三6/上） */
+const RESONANCE={
+ 1:{pair:"四",mean:"起步能不能接上後續的推進與機會",yes:"有人願意帶你、給機會，起步能延續。",no:"起步有點孤單，主動去找接應、鋪路會差很多。"},
+ 2:{pair:"五",mean:"打的底能不能遇到發揮的舞台",yes:"實力被看見、有舞台。",no:"有點懷才不遇，先續紮根、或主動爭取被看見。"},
+ 3:{pair:"上",mean:"撐的難關有沒有出口與後援",yes:"有人接住、也看得到終點。",no:"容易孤軍奮戰——這關務必對外求援，別自己硬扛。"},
+ 4:{pair:"初",mean:"走得快，根基與初衷還在不在",yes:"根基穩、初衷清楚。",no:"走得有點快、根基偏虛，回頭補一下基礎。"},
+ 5:{pair:"二",mean:"正當時，底子與班底夠不夠厚",yes:"底子厚，發揮有後盾。",no:"時機到了但底子偏薄，邊做邊補、別透支。"},
+ 6:{pair:"三",mean:"要收尾，過程的坎與教訓清了沒",yes:"該學的學到了，能漂亮收尾。",no:"還有未解的坎，先了結它，別急著收。"},
+};
+/* 六卦 × 六爻 對策（先做最常出現的六卦；其餘卦用 fallback） */
+const HEX_YAO={
+ 節:{1:"先從一件小事開始說不、收回一點，不用一次到位。",2:"把有效的界線固定成習慣，讓它穩下來。",3:"先守住最關鍵的一條線就好，別全面開戰。",4:"挑一個關鍵關係好好溝通，而不是一次對所有人。",5:"主動重排承諾與優先順序，這是最好的時機。",6:"該鬆一點了，留些彈性，別把節制變成封閉。"},
+ 坎:{1:"早點正視，別等壓力累積成大坑。",2:"建立穩定的恢復習慣，固定一個能喘息的縫。",3:"先求安全、別做重大決定，找人陪你一起。",4:"謹慎前進、一步一步，別急著證明自己好了。",5:"可以主動面對核心問題，你撐得住。",6:"該轉身了，把注意力從問題移開，回到生活。"},
+ 困:{1:"先看清楚是什麼卡住你，別急著掙扎。",2:"盤點還能動用的資源，從小處慢慢鬆動。",3:"越是這裡越不能硬撞，回到資源養精蓄銳。",4:"謹慎抓住一個鬆動點，輕輕推、別用力過猛。",5:"集中力氣在最有把握的一處突破。",6:"該換方式或換場了，別在原地繼續耗。"},
+ 艮:{1:"先試著在一件小事上喊停，感受一下停下來的感覺。",2:"把「能停」變成穩定的節奏，固定留白給自己。",3:"最難停的關卡，先守住一個不被打擾的時段。",4:"謹慎拿捏該停哪、該放行哪，別一律封閉。",5:"你有空間好好重置，主動安排一段真正的休止。",6:"停得有點過頭、開始僵住了，該適度鬆開、重新流動。"},
+ 離:{1:"先收集資訊、把問題輪廓看清，別急著下結論。",2:"把看清的事一點點驗證、累積判斷。",3:"看得越用力越卡，先停止分析、回到一個小行動。",4:"謹慎在「再想」與「先做」之間選，挑一步先試。",5:"你看得準、時機也對，把判斷帶去行動。",6:"想得夠多了，再分析會空轉，該收束、做決定。"},
+ 泰:{1:"順流剛開始，把這份打開的感覺先穩住。",2:"趁順穩穩打底，讓流通有根。",3:"順中藏著鬆懈的風險，留意別在這裡大意。",4:"接近高點，謹慎別過度擴張。",5:"最順、最能成事的時候，好好發揮、也打穩地基。",6:"順到頂了，開始留意反轉，先守成、別再加碼。"},
+};
 const KEYWORDS=[
  [["累","疲"],{kan:1,kun:1}],[["亂"],{li:-1}],[["煩"],{li:-1,kan:1}],
  [["怕","害怕","擔心"],{kan:2}],[["空","空虛"],{kan:1}],[["急"],{zhen:1,qian:1}],
@@ -481,6 +535,14 @@ function findAdjust(q){
  }
  return out.slice(0,3);
 }
+function computeStage(state){
+ const sa=state.stage, p=state.position||"P2";
+ let stage;
+ if(sa==="A")stage=1; else if(sa==="B")stage=2; else if(sa==="C")stage=3;
+ else if(sa==="E")stage=6; else if(sa==="D")stage=(p==="P1")?5:4; else stage=2;
+ const resLevel=p==="P1"?"yes":(p==="P3"?"no":"partial");
+ return {stage,position:p,resLevel};
+}
 function runEngine(state){
  const s=computeBagua(state);
  const {z,sd}=zscores(s);
@@ -488,18 +550,19 @@ function runEngine(state){
  const sp=(()=>{const i=FOLLOWUPS.findIndex(x=>x.id==="surplus");return state.followups[i]&&state.followups[i].val;})();
  const tone=overallTone(q,sd,sp);
  const {main,sec,close}=pickHex(state,z,tone);
- return {s,z,q,tone,main,sec,close,highlight:findHighlight(q,z),adjust:findAdjust(q)};
+ const {stage,position,resLevel}=computeStage(state);
+ return {s,z,q,tone,main,sec,close,highlight:findHighlight(q,z),adjust:findAdjust(q),stage,position,resLevel};
 }
 
 /* ============================================================ 畫面 */
-const state={step:0,topic:null,selected:[],followups:[],freeText:"",result:null,confirm:null,activeHex:null};
+const state={step:0,topic:null,selected:[],followups:[],stage:null,position:null,freeText:"",result:null,confirm:null,activeHex:null};
 const app=document.getElementById("app"),bar=document.getElementById("bar"),prog=document.getElementById("progress");
-const STEPS=6; // 主題/複選/追問/自由/回放/報告
+const STEPS=7; // 主題/複選/追問/時與位/自由/回放/報告
 let lastStep=-1;
 function renderProgress(){prog.innerHTML="";for(let i=0;i<STEPS;i++){const b=document.createElement("i");if(i<=state.step)b.className="on";prog.appendChild(b);}}
 function render(){
  renderProgress();app.innerHTML="";bar.innerHTML="";
- [renderTopic,renderSelect,renderFollowups,renderFree,renderReplay,renderReport][state.step]();
+ [renderTopic,renderSelect,renderFollowups,renderStagePos,renderFree,renderReplay,renderReport][state.step]();
  if(state.step!==lastStep){window.scrollTo({top:0,behavior:"smooth"});lastStep=state.step;}
 }
 function updateBar(label,enabled){const b=bar.querySelector(".btn-primary");if(b){b.textContent=label;b.disabled=!enabled;}}
@@ -552,13 +615,33 @@ function renderFollowups(){
  app.appendChild(d);
  barEl("下一步",FOLLOWUPS.every((_,i)=>state.followups[i]),()=>{state.step=3;render();},true);
 }
+/* 第 2 層：時與位 */
+function renderStagePos(){
+ const d=document.createElement("div");d.className="step";
+ d.innerHTML=`<div class="q-eyebrow">STEP 4</div><h2 class="q">你身處的「時」與「位」</h2><p class="q-hint">同樣的狀態，在不同階段、不同位置，建議會很不一樣。</p>`;
+ [STAGE_Q,POS_Q].forEach((fq,qi)=>{
+   const cur=qi===0?state.stage:state.position;
+   const block=document.createElement("div");block.style.marginTop=qi?"26px":"14px";
+   block.innerHTML=`<div class="group-label" style="margin-top:0">${fq.eyebrow}</div>
+     <div style="font-size:15px;margin:0 0 12px;color:var(--ink)">${fq.q}</div>`;
+   fq.opts.forEach(([text,val])=>{
+     const o=document.createElement("button");o.className="opt"+(cur===val?" sel":"");
+     o.innerHTML=`<span class="mark"></span><span>${text}</span>`;
+     o.onclick=()=>{if(qi===0)state.stage=val;else state.position=val;
+       block.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));o.classList.add("sel");
+       updateBar("下一步",!!state.stage&&!!state.position);};
+     block.appendChild(o);});
+   d.appendChild(block);});
+ app.appendChild(d);
+ barEl("下一步",!!state.stage&&!!state.position,()=>{state.step=4;render();},true);
+}
 function renderFree(){
- const d=stepEl("STEP 4","用幾句話補充你現在最想理解的狀態","可留空。剛剛沒選到、或選項裡沒有的，都可以寫在這——寫得越貼近你，判讀越準。");
+ const d=stepEl("STEP 5","用幾句話補充你現在最想理解的狀態","可留空。剛剛沒選到、或選項裡沒有的，都可以寫在這——寫得越貼近你，判讀越準。");
  const ta=document.createElement("textarea");
  ta.placeholder="例如：我最近工作很多，很多事都要我決定，但其實很累，又不太敢停下來⋯⋯";
  ta.value=state.freeText;ta.oninput=e=>state.freeText=e.target.value;
  d.appendChild(ta);app.appendChild(d);
- barEl("看看我現在的狀態",true,()=>{state.result=runEngine(state);state.step=4;render();},true);
+ barEl("看看我現在的狀態",true,()=>{state.result=runEngine(state);state.step=5;render();},true);
 }
 /* 回放確認（打架且有鑑別題 → 改問一題鑑別） */
 function renderReplay(){
@@ -567,7 +650,7 @@ function renderReplay(){
  const disc=r.close?DISCRIM[discKey]:null;
 
  if(disc){
-   const d=stepEl("STEP 5","還差一步就能對焦","你的狀態落在兩個卦之間，這一題幫你分清楚是哪一個。");
+   const d=stepEl("STEP 6","還差一步就能對焦","你的狀態落在兩個卦之間，這一題幫你分清楚是哪一個。");
    const box=document.createElement("div");box.className="replay";
    box.innerHTML=`<p class="lead">你現在比較像 <span class="hexname">${r.main}</span>，也帶著 <span class="hexname">${r.sec}</span> 的成分。</p>`+
      `<p class="lead" style="font-size:14px;color:var(--ink-soft);margin-top:8px">${disc.q}</p>`;
@@ -585,12 +668,12 @@ function renderReplay(){
    both.onclick=()=>{state.confirm="partial";state.activeHex=null;d.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));both.classList.add("sel");updateBar("看完整報告",true);};
    d.appendChild(both);
    app.appendChild(d);
-   barEl("看完整報告",!!state.confirm,()=>{state.step=5;render();},true);
+   barEl("看完整報告",!!state.confirm,()=>{state.step=6;render();},true);
    return;
  }
 
  // 一般回放
- const d=stepEl("STEP 5","在給你完整的狀態之前⋯","這份結果是你一路選出來的，先讓你確認方向對不對。");
+ const d=stepEl("STEP 6","在給你完整的狀態之前⋯","這份結果是你一路選出來的，先讓你確認方向對不對。");
  const box=document.createElement("div");box.className="replay";
  box.innerHTML=`<p class="lead">我先讀到，你現在比較像 <span class="hexname">${r.main}（${M.theme}）</span>。</p>`+
    `<p class="lead" style="color:var(--ink-soft);font-size:14px;margin-top:8px">${M.state[r.tone]}</p>`;
@@ -602,7 +685,7 @@ function renderReplay(){
    o.onclick=()=>{state.confirm=val;state.activeHex=null;d.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));o.classList.add("sel");updateBar("看完整報告",true);};
    d.appendChild(o);});
  app.appendChild(d);
- barEl("看完整報告",!!state.confirm,()=>{state.step=5;render();},true);
+ barEl("看完整報告",!!state.confirm,()=>{state.step=6;render();},true);
 }
 /* 報告 */
 function renderReport(){
@@ -637,6 +720,22 @@ function renderReport(){
    <h2 class="name">${mainHex}</h2><div class="theme">${M.theme}</div>
    <div class="state">${M.state[tone]}</div>`;
  d.appendChild(hc);
+
+ // 你身處的階段（時）＋ 相應 ＋ 此刻對策
+ const st=STAGES[r.stage], res=RESONANCE[r.stage];
+ const yaoText=(HEX_YAO[mainHex]&&HEX_YAO[mainHex][r.stage])||st.hint;
+ const resYes=r.resLevel==="yes", resNo=r.resLevel==="no";
+ const resLine=resYes?res.yes:(resNo?res.no:"外在有一些空間，但需要你主動借力、溝通。");
+ const sp=document.createElement("div");sp.className="panel stage-panel";
+ sp.innerHTML=`<h3>你身處的階段</h3>
+   <div class="stage-head"><span class="stage-yao">${st.yao}</span><span class="stage-nm">${st.name}</span>
+     <span class="stage-tone">${st.tone}</span></div>
+   <p>${mainHex}卦走到「${st.name}」：${st.desc}。${st.hint}</p>
+   <div class="stage-res ${resYes?'res-yes':(resNo?'res-no':'res-mid')}">
+     <span class="res-lab">內外相應（應${res.pair}）</span>
+     <span class="res-txt">${resLine}</span></div>
+   <div class="stage-act"><span class="act-lab">此刻的對策</span>${yaoText}</div>`;
+ d.appendChild(sp);
 
  // 你做得好的地方（必有，置前）
  const good=document.createElement("div");good.className="panel good-panel";
@@ -719,7 +818,7 @@ function renderReport(){
 
  const inner=document.createElement("div");inner.className="bar-inner";
  const b=document.createElement("button");b.className="btn btn-primary";b.textContent="重新問一次";
- b.onclick=()=>{Object.assign(state,{step:0,topic:null,selected:[],followups:[],freeText:"",result:null,confirm:null,activeHex:null});render();};
+ b.onclick=()=>{Object.assign(state,{step:0,topic:null,selected:[],followups:[],stage:null,position:null,freeText:"",result:null,confirm:null,activeHex:null});render();};
  inner.appendChild(b);bar.appendChild(inner);
 }
 
