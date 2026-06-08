@@ -132,6 +132,17 @@
   .bagua-detail .bipolar span{color:var(--ink-faint);line-height:1.5}
   .bagua-detail .bipolar span.hl{color:var(--lack);font-weight:500}
 
+  /* 畫面化 */
+  .scene-panel{background:var(--card);border-color:var(--line)}
+  .scene-panel p{margin:0;font-size:15px;line-height:1.85;color:var(--ink)}
+  /* 延伸推薦 */
+  .ext-panel p{font-size:13.5px;line-height:1.7;color:var(--ink-soft);margin:0 0 10px}
+  .ext-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .ext-chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft);
+    background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+  .ext-chip b{font-family:"Noto Serif TC",serif;font-size:15px;color:var(--accent)}
+  .ext-note{margin:12px 0 0!important;font-size:11.5px!important;color:var(--ink-faint)!important}
+
   /* 階段（時與位）面板 */
   .stage-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
   .stage-head .stage-yao{font-family:"Noto Serif TC",serif;font-size:13px;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:1px 9px}
@@ -429,6 +440,20 @@ const HEX={
    breath:"吐氣時放鬆下顎與肩膀，鬆開防備。",reminder:{good:"你願意面對衝突，這不容易。",default:"贏了道理，未必贏了關係。"}},
 };
 
+/* ---- 畫面化文案：用生活畫面把卦講得貼近（A 中性版）。先做常見四卦 ---- */
+const HEX_SCENE={
+ 節:"很多時候，你會先答應別人，回過頭才發現自己的時間被填滿了。事情你都接得起來，只是「接」這件事，慢慢變成了一種習慣，連喘口氣的縫都被填掉。",
+ 坎:"你心裡好像一直擱著一件放不太下的事。表面上日子照常過，但那份重量一直在，讓你很難真正鬆下來、好好休息。",
+ 困:"你不是沒有力氣，而是這股力氣暫時使不上。像是想往前，卻發現門還沒開——越用力推，越覺得卡。",
+ 艮:"你好像一直在動、停不太下來，連「什麼都不做」都會有點不安。但有些時候，停，其實是需要的，不是偷懶。",
+};
+/* ---- 相鄰卦（先用序卦前後卦當「想多認識」的延伸）---- */
+const HEX_NEIGHBOR={
+ 泰:["否","謙"], 復:["坎","井"], 井:["困","復"], 比:["訟","謙"],
+ 需:["訟","漸"], 漸:["需","歸妹"], 未濟:["既濟","離"], 離:["坎","未濟"],
+ 節:["困","井"], 困:["坎","井"], 坎:["井","復"], 艮:["節","漸"], 訟:["需","比"],
+};
+
 /* ============================================================ 引擎 */
 function computeBagua(state){
  const s={};for(const k in BAGUA)s[k]=0;
@@ -721,21 +746,12 @@ function renderReport(){
    <div class="state">${M.state[tone]}</div>`;
  d.appendChild(hc);
 
- // 你身處的階段（時）＋ 相應 ＋ 此刻對策
- const st=STAGES[r.stage], res=RESONANCE[r.stage];
- const yaoText=(HEX_YAO[mainHex]&&HEX_YAO[mainHex][r.stage])||st.hint;
- const resYes=r.resLevel==="yes", resNo=r.resLevel==="no";
- const resLine=resYes?res.yes:(resNo?res.no:"外在有一些空間，但需要你主動借力、溝通。");
- const sp=document.createElement("div");sp.className="panel stage-panel";
- sp.innerHTML=`<h3>你身處的階段</h3>
-   <div class="stage-head"><span class="stage-yao">${st.yao}</span><span class="stage-nm">${st.name}</span>
-     <span class="stage-tone">${st.tone}</span></div>
-   <p>${mainHex}卦走到「${st.name}」：${st.desc}。${st.hint}</p>
-   <div class="stage-res ${resYes?'res-yes':(resNo?'res-no':'res-mid')}">
-     <span class="res-lab">內外相應（應${res.pair}）</span>
-     <span class="res-txt">${resLine}</span></div>
-   <div class="stage-act"><span class="act-lab">此刻的對策</span>${yaoText}</div>`;
- d.appendChild(sp);
+ // 畫面化（看見）：用生活畫面把此刻講得更貼近
+ if(HEX_SCENE[mainHex]&&tone!=="good"){
+   const sc=document.createElement("div");sc.className="panel scene-panel";
+   sc.innerHTML=`<p>${HEX_SCENE[mainHex]}</p>`;
+   d.appendChild(sc);
+ }
 
  // 你做得好的地方（必有，置前）
  const good=document.createElement("div");good.className="panel good-panel";
@@ -787,6 +803,23 @@ function renderReport(){
  }
  d.appendChild(bp);
 
+ // —— 以下是「方向」：先講你身處的階段，再給下一步 ——
+ // 你身處的階段（時）＋ 相應 ＋ 此刻對策
+ const st=STAGES[r.stage], res=RESONANCE[r.stage];
+ const yaoText=(HEX_YAO[mainHex]&&HEX_YAO[mainHex][r.stage])||st.hint;
+ const resYes=r.resLevel==="yes", resNo=r.resLevel==="no";
+ const resLine=resYes?res.yes:(resNo?res.no:"外在有一些空間，但需要你主動借力、溝通。");
+ const sp=document.createElement("div");sp.className="panel stage-panel";
+ sp.innerHTML=`<h3>你身處的階段</h3>
+   <div class="stage-head"><span class="stage-yao">${st.yao}</span><span class="stage-nm">${st.name}</span>
+     <span class="stage-tone">${st.tone}</span></div>
+   <p>${mainHex}卦走到「${st.name}」：${st.desc}。${st.hint}</p>
+   <div class="stage-res ${resYes?'res-yes':(resNo?'res-no':'res-mid')}">
+     <span class="res-lab">內外相應（應${res.pair}）</span>
+     <span class="res-txt">${resLine}</span></div>
+   <div class="stage-act"><span class="act-lab">此刻的對策</span>${yaoText}</div>`;
+ d.appendChild(sp);
+
  // 下一步方向（含目標卦的解釋，讓使用者看得懂）
  const cp=document.createElement("div");cp.className="panel";
  const toHex=M.change[0], toM=HEX[toHex];
@@ -809,6 +842,24 @@ function renderReport(){
  const rtext=tone==="good"?(M.reminder.good||M.reminder.default):M.reminder.default;
  rm.innerHTML=`<div class="reminder"><span class="qm">「</span>${rtext}<span class="qm">」</span></div>`;
  d.appendChild(rm);
+
+ // 想更認識自己：延伸推薦其他卦
+ const ext=document.createElement("div");ext.className="panel ext-panel";
+ let extInner=`<h3>想更認識自己，可以往這看</h3>`;
+ const chips=heros=>heros.map(h=>HEX[h]?`<span class="ext-chip"><b>${h}</b>${HEX[h].theme}</span>`:"").join("");
+ if(pair){
+   const a=r.main,b=r.sec;
+   extInner+=`<p>你現在同時帶著 <b>${a}</b> 和 <b>${b}</b> 兩種狀態——這很正常，人本來就常處在過渡地帶。這兩個方向，都值得認識：</p>`;
+   const set=[...new Set([...(HEX_NEIGHBOR[a]||[]),...(HEX_NEIGHBOR[b]||[])])].filter(h=>h!==a&&h!==b).slice(0,3);
+   extInner+=`<div class="ext-chips">${chips(set)}</div>`;
+ }else{
+   const nb=(HEX_NEIGHBOR[mainHex]||[]).slice(0,2);
+   extInner+=`<p>和「${mainHex}」相鄰的這幾個狀態，能幫你更立體地看見自己現在的位置：</p>`+
+     `<div class="ext-chips">${chips(nb)}</div>`;
+ }
+ extInner+=`<p class="ext-note">這些不是你現在的判讀，是想更認識自己時，可以延伸閱讀的方向。</p>`;
+ ext.innerHTML=extInner;
+ d.appendChild(ext);
 
  // 免責聲明：用 appendChild，不可用 innerHTML+=（會清掉前面所有按鈕的點擊事件）
  const dis=document.createElement("p");dis.className="disclaimer";
