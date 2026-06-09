@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>問易 · 狀態鏡子</title>
+<title>問易 · 易經生命狀態</title>
+<meta name="description" content="借古人的易經智慧，照見此刻的自己。問易讀內在狀態，卜易擲錢求一卦指引。">
+<meta property="og:title" content="問易 · 易經生命狀態">
+<meta property="og:description" content="借古人的易經智慧，照見此刻的自己。不是預測命運，而是讀懂當下、辨識下一步。">
+<meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
@@ -137,29 +141,45 @@
   .home-link:active{color:var(--accent)}
 
   /* 首頁 */
-  .intro-lead{margin:8px 0 30px}
-  .intro-lead p{font-size:15.5px;line-height:1.9;color:var(--ink-soft);margin:0 0 12px}
-  .intro-lead .intro-quiet{color:var(--ink-faint);font-size:14px;font-family:"Noto Serif TC",serif}
+  .intro-lead{margin:6px 0 0}
+  /* 八卦橫排 */
+  .bagua-row{display:flex;justify-content:space-between;gap:4px;margin:14px 0 30px;padding:18px 4px;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .bg-item{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .bg-lines{display:flex;flex-direction:column;gap:3px;width:22px}
+  .bg-lines .ty{height:4px;display:flex;gap:4px}
+  .bg-lines .ty.full{background:var(--accent);border-radius:2px}
+  .bg-lines .ty span{flex:1;background:var(--accent);border-radius:2px}
+  .bg-nm{font-family:"Noto Serif TC",serif;font-size:12px;color:var(--ink-faint)}
+  .intro-block{margin-bottom:22px;padding-left:14px;border-left:2px solid var(--accent-soft)}
+  .intro-block.plain{margin:0 0 30px;padding:0;border-left:none;text-align:center}
+  .intro-block.plain p{font-size:15.5px;line-height:2.05;color:var(--ink-soft)}
+  .intro-block .ib-label{font-size:11px;letter-spacing:.22em;color:var(--accent);margin-bottom:6px;font-weight:500}
+  .intro-block p{font-size:15px;line-height:1.9;color:var(--ink-soft);margin:0}
+  .intro-block b{color:var(--ink);font-weight:500}
+  .intro-quiet{text-align:center;font-family:"Noto Serif TC",serif;font-size:15px;color:var(--ink-faint);margin:30px 0 8px;letter-spacing:.04em}
+  /* 柔性按鈕（低調文字型） */
+  .btn-soft{flex:1;background:none;border:1px solid var(--line);border-radius:999px;padding:14px;
+    font-family:"Noto Serif TC",serif;font-size:16px;letter-spacing:.06em;color:var(--accent);cursor:pointer;transition:.18s}
+  .btn-soft:active{transform:scale(.98);background:var(--accent-soft)}
   .entries{display:flex;flex-direction:column;gap:14px}
   .entry{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:22px 20px;cursor:pointer;font-family:inherit;transition:.18s;position:relative}
+    padding:22px 20px;cursor:pointer;font-family:inherit;transition:.18s;position:relative;overflow:hidden}
   .entry:active{transform:scale(.99)}
   .entry:hover{border-color:var(--accent)}
-  .entry-title{font-family:"Noto Serif TC",serif;font-size:26px;font-weight:700;color:var(--accent);letter-spacing:.06em}
-  .entry-sub{font-size:13px;color:var(--ink-faint);margin:2px 0 10px}
-  .entry-desc{font-size:14px;line-height:1.7;color:var(--ink-soft);margin:0 0 12px}
-  .entry-go{font-family:"Noto Serif TC",serif;font-size:14px;color:var(--accent)}
+  .entry::after{content:"";position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;background:var(--accent-soft);opacity:.5}
+  .entry-title{font-family:"Noto Serif TC",serif;font-size:26px;font-weight:700;color:var(--accent);letter-spacing:.06em;position:relative}
+  .entry-sub{font-size:13px;color:var(--ink-faint);margin:2px 0 10px;position:relative}
+  .entry-desc{font-size:14px;line-height:1.7;color:var(--ink-soft);margin:0 0 12px;position:relative}
+  .entry-go{font-family:"Noto Serif TC",serif;font-size:14px;color:var(--accent);position:relative}
 
-  /* 古錢 */
+  /* 古錢（方孔錢插畫） */
   .coin-wrap{margin-top:22px;text-align:center}
-  .coins{display:flex;justify-content:center;gap:16px;margin-bottom:14px}
-  .coin{width:60px;height:60px;border-radius:50%;border:2px solid var(--line);background:var(--card);
-    display:flex;align-items:center;justify-content:center;font-family:"Noto Serif TC",serif;font-size:20px;
-    color:var(--ink-faint);transition:transform .15s}
-  .coin.flip{transform:rotateY(180deg) scale(.9)}
-  .coin.yang{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
-  .coin.yin{border-color:var(--ink-faint);color:var(--ink-soft);background:var(--paper)}
-  .coin-result{font-size:14px;color:var(--ink-soft);min-height:20px;font-family:"Noto Serif TC",serif}
+  .coins{display:flex;justify-content:center;gap:18px;margin-bottom:14px}
+  .coin{width:62px;height:62px;transition:transform .25s;display:inline-block}
+  .coin svg{width:100%;height:100%;display:block}
+  .coin.flip{transform:rotateY(180deg)}
+  .coin-result{font-size:14px;color:var(--ink-soft);min-height:22px;font-family:"Noto Serif TC",serif}
 
   /* 爻象堆疊 */
   .yao-stack{display:flex;flex-direction:column;gap:9px;padding:6px 0}
@@ -183,6 +203,22 @@
   .focus-tag.main{background:var(--accent);color:#fff}
   .focus-txt{font-size:14.5px;line-height:1.7;color:var(--ink)}
   .focus-note{margin:8px 0 0!important;font-size:12.5px!important;color:var(--ink-soft)!important}
+
+  /* 逐爻意義 */
+  .yao-list{display:flex;flex-direction:column;gap:4px}
+  .yao-detail{padding:8px 10px;border-radius:10px}
+  .yao-detail.changing{background:var(--lack-soft)}
+  .yao-detail .yao{margin-bottom:2px}
+  .yao-detail.changing .yseg{background:var(--lack)}
+  .yao-detail .ychange{width:auto;flex:none;font-size:11px;color:var(--lack);white-space:nowrap}
+  .yao-mean{margin:0 0 0 28px;font-size:12.5px;line-height:1.6;color:var(--ink-faint)}
+  .yao-mean b{color:var(--lack);font-weight:500}
+
+  /* 重點總結（可分享） */
+  .summary-panel{background:var(--card)}
+  .summary-list{margin:0;padding-left:18px}
+  .summary-list li{font-size:14px;line-height:1.75;color:var(--ink-soft);margin-bottom:7px}
+  .summary-list b{color:var(--ink);font-weight:500}
 
   /* 畫面化 */
   .scene-panel{background:var(--card);border-color:var(--line)}
@@ -985,6 +1021,14 @@ function tossLine(){
  return {coins:c,sum,yin:(sum===6||sum===8),changing:(sum===6||sum===9)};
 }
 function trigramName(bits){return TRIGRAM[bits.join("")];}
+function hexTrigrams(lines){ // 回傳 {upper,lower} 八卦名
+ const bit=l=>l.yin?0:1;
+ return {lower:trigramName([bit(lines[0]),bit(lines[1]),bit(lines[2])]),
+         upper:trigramName([bit(lines[3]),bit(lines[4]),bit(lines[5])])};
+}
+function natureName(lines){ // 例：水天
+ const t=hexTrigrams(lines);return TRIGRAM_NATURE[t.upper]+TRIGRAM_NATURE[t.lower];
+}
 function buildHex(lines){ // lines: 由下而上 6 個 {yin,changing}
  const bit=l=>l.yin?0:1;
  const lower=trigramName([bit(lines[0]),bit(lines[1]),bit(lines[2])]);
@@ -998,6 +1042,38 @@ function transformedHex(lines){ // 變卦：老陰老陽翻面
  const upper=trigramName([bit(tl[3]),bit(tl[4]),bit(tl[5])]);
  return GUA64[upper+lower];
 }
+/* 八卦的自然象（用於「水天」「地天」這種卦象稱呼）*/
+const TRIGRAM_NATURE={乾:"天",坤:"地",震:"雷",艮:"山",坎:"水",離:"火",巽:"風",兌:"澤"};
+/* C 版：問題領域偵測（關鍵字）+ 各領域一句通用提點 */
+const DOMAINS=[
+ {key:"事業",words:["工作","事業","職","老闆","主管","同事","升遷","加薪","離職","換工作","創業","面試","專案","公司","生意","客戶","業績"],
+  frame:"在工作與事業上",tip:"做決定前，多想一步長期：這選擇三年後的你會感謝嗎？"},
+ {key:"感情",words:["感情","愛情","伴侶","另一半","男友","女友","老公","老婆","曖昧","告白","分手","復合","喜歡","在一起","結婚","對方","他","她"],
+  frame:"在這段感情關係裡",tip:"先分清楚哪些是你的感受、哪些是對方的，再決定怎麼回應。"},
+ {key:"財務",words:["錢","財務","投資","買","賣","房","車","貸款","負債","存款","理財","股票","收入","花費"],
+  frame:"在金錢與財務上",tip:"分清「想要」和「需要」，留一條退路，別把自己逼到沒餘裕。"},
+ {key:"人際",words:["朋友","家人","父母","親戚","相處","衝突","誤會","溝通","團隊","人際"],
+  frame:"在人際相處上",tip:"先把對方真正在意的聽懂，很多卡點會鬆開一半。"},
+ {key:"健康",words:["健康","身體","生病","病","睡","焦慮","運動","作息"],
+  frame:"在身心健康上",tip:"身體和情緒都在說話，先把休息與安頓放在前面。"},
+ {key:"抉擇",words:["該不該","要不要","選","抉擇","決定","去留","留下","離開","猶豫","兩難"],
+  frame:"在這個抉擇上",tip:"與其問「哪個對」，不如問「哪個更像你想成為的樣子」。"},
+];
+function detectDomain(q){
+ if(!q||!q.trim())return null;
+ for(const d of DOMAINS)if(d.words.some(w=>q.includes(w)))return d;
+ return null;
+}
+/* 每爻位置的簡短意義（卜易用，自寫白話）*/
+const YAO_MEANING={
+ 1:"事情的起點、根基；還小，宜潛藏蓄勢。",
+ 2:"開始站穩、漸被看見；宜守中，穩紮穩打。",
+ 3:"半路的關卡、最易出事；宜戒慎，勿躁進。",
+ 4:"接近核心、面臨抉擇；宜謹慎拿捏進退。",
+ 5:"最當位、最能發揮的位置；可以放手去做。",
+ 6:"事情的頂點、極限；過則生悔，宜收、宜轉。",
+};
+
 /* 動爻白話：用該卦卦義 × 六爻階段（沿用問易的 STAGES）*/
 function yaoReading(guaName,pos){ // pos 1..6 由下而上
  const st=STAGES[pos];
@@ -1033,23 +1109,58 @@ function focusRule(lines, ben, bian){
 /* ============================================================
    首頁與模式路由
    ============================================================ */
-function clearAll(){prog.innerHTML="";app.innerHTML="";bar.innerHTML="";}
+function clearAll(){const tg=document.querySelector(".tagline");if(tg)tg.style.display="";prog.innerHTML="";app.innerHTML="";bar.innerHTML="";}
+/* 方孔古錢插畫（單色）：state = 'blank'|'yang'|'yin' */
+function coinSVG(stt){
+ const col=stt==="yang"?"var(--accent)":(stt==="yin"?"var(--ink-faint)":"var(--line)");
+ const marks=stt==="yang"
+   ? `<g stroke="${col}" stroke-width="2" stroke-linecap="round">
+        <line x1="30" y1="9" x2="30" y2="15"/><line x1="30" y1="45" x2="30" y2="51"/>
+        <line x1="9" y1="30" x2="15" y2="30"/><line x1="45" y1="30" x2="51" y2="30"/></g>`
+   : (stt==="yin"
+     ? `<g stroke="${col}" stroke-width="2" stroke-linecap="round" opacity=".7">
+          <line x1="20" y1="20" x2="24" y2="24"/><line x1="40" y1="20" x2="36" y2="24"/>
+          <line x1="20" y1="40" x2="24" y2="36"/><line x1="40" y1="40" x2="36" y2="36"/></g>`
+     : "");
+ const fill=stt==="blank"?"none":(stt==="yang"?"var(--accent-soft)":"var(--paper)");
+ return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+   <circle cx="30" cy="30" r="27" fill="${fill}" stroke="${col}" stroke-width="2.5"/>
+   <rect x="22" y="22" width="16" height="16" rx="1.5" fill="var(--paper)" stroke="${col}" stroke-width="2.5"/>
+   ${marks}</svg>`;
+}
 function backHomeLink(){
- const a=document.createElement("button");a.className="home-link";a.textContent="← 回首頁";
- a.onclick=()=>{state.mode="intro";renderIntro();};
+ const a=document.createElement("button");a.className="home-link";a.textContent="← 回選擇";
+ a.onclick=()=>{state.mode="choose";renderChoose();};
  return a;
 }
 function renderIntro(){
  clearAll();
+ const tg=document.querySelector(".tagline");if(tg)tg.style.display="none";
  const d=document.createElement("div");d.className="step intro";
  d.innerHTML=`
-   <div class="intro-lead">
-     <p>易經，是古人觀察「變化」累積下來的智慧。</p>
-     <p>它不預測命運，而是幫你在當下靜下來，看清自己身處的處境——你現在是什麼狀態、走到哪個階段、下一步可以往哪。</p>
-     <p class="intro-quiet">找個安靜的時刻，深吸一口氣，再開始。</p>
+   <div style="height:24px"></div>
+   <div class="intro-block plain">
+     <p>易經，是古人觀察「<b>變化</b>」累積下來的智慧。<br>它不預測命運，<br>而是幫你在當下靜下來。</p>
    </div>
-   <div class="entries"></div>`;
- const en=d.querySelector(".entries");
+   <div class="intro-block plain">
+     <p>看清自己身處的處境——<br>你現在是<b>什麼狀態</b>、走到<b>哪個階段</b>、<b>下一步</b>可以往哪。</p>
+   </div>
+   <div class="intro-block plain">
+     <p>一是<b>問易</b>，用幾個問題照見你的內在；<br>二是<b>卜易</b>，靜心擲錢、求一卦指引。</p>
+   </div>
+   <div style="height:40px"></div>`;
+ app.appendChild(d);
+ const inner=document.createElement("div");inner.className="bar-inner";
+ const b=document.createElement("button");b.className="btn-soft";b.textContent="開始 →";
+ b.onclick=()=>{state.mode="choose";renderChoose();};
+ inner.appendChild(b);bar.appendChild(inner);
+}
+function renderChoose(){
+ clearAll();
+ const d=document.createElement("div");d.className="step";
+ d.appendChild(backHomeLink());
+ d.insertAdjacentHTML("beforeend",`<h2 class="q" style="margin-top:4px">今天，想用哪一種方式？</h2><p class="q-hint">兩種都可以，跟著當下的心意選。</p>`);
+ const en=document.createElement("div");en.className="entries";
  const make=(title,sub,desc,onClick)=>{
    const c=document.createElement("button");c.className="entry";
    c.innerHTML=`<div class="entry-title">${title}</div><div class="entry-sub">${sub}</div><p class="entry-desc">${desc}</p><span class="entry-go">進入 →</span>`;
@@ -1061,16 +1172,17 @@ function renderIntro(){
  make("卜易","以古錢占問，求一卦指引",
    "靜心想著你的問題，擲六次古錢、得出一卦與變卦——適合面對抉擇、想聽聽古人怎麼說時。",
    ()=>{state.mode="buyi";Object.assign(state,{bstep:0,question:"",lines:[]});renderBuyi();});
- app.appendChild(d);
+ d.appendChild(en);app.appendChild(d);
 }
 
 /* ---------- 卜易流程 ---------- */
+let lastBstep=-1;
 function renderBuyi(){
  clearAll();
  if(state.bstep===0)buyiQuestion();
  else if(state.bstep===1)buyiToss();
  else buyiResult();
- window.scrollTo({top:0,behavior:"smooth"});
+ if(state.bstep!==lastBstep){window.scrollTo({top:0,behavior:"smooth"});lastBstep=state.bstep;}
 }
 function buyiQuestion(){
  const d=document.createElement("div");d.className="step";
@@ -1108,10 +1220,10 @@ function buyiToss(){
  }
  d.appendChild(stack);
 
- // 古錢區
+ // 古錢區（方孔錢插畫）
  const coinWrap=document.createElement("div");coinWrap.className="coin-wrap";
- coinWrap.innerHTML=`<div class="coins"><span class="coin">？</span><span class="coin">？</span><span class="coin">？</span></div>
-   <div class="coin-result"></div>`;
+ coinWrap.innerHTML=`<div class="coins"><span class="coin">${coinSVG("blank")}</span><span class="coin">${coinSVG("blank")}</span><span class="coin">${coinSVG("blank")}</span></div>
+   <div class="coin-result">點下方按鈕，擲出三枚古錢</div>`;
  d.appendChild(coinWrap);
  app.appendChild(d);
 
@@ -1122,11 +1234,11 @@ function buyiToss(){
    if(state.lines.length>=6){state.bstep=2;renderBuyi();return;}
    const line=tossLine();
    const coinEls=coinWrap.querySelectorAll(".coin");
-   coinEls.forEach((c,i)=>{c.classList.add("flip");setTimeout(()=>{c.textContent=line.coins[i]===3?"陽":"陰";c.className="coin "+(line.coins[i]===3?"yang":"yin");},150);});
+   coinEls.forEach((c,i)=>{c.classList.add("flip");setTimeout(()=>{c.innerHTML=coinSVG(line.coins[i]===3?"yang":"yin");c.classList.remove("flip");},160);});
    const names={6:"老陰（變爻）",7:"少陽",8:"少陰",9:"老陽（變爻）"};
    coinWrap.querySelector(".coin-result").textContent=`第 ${state.lines.length+1} 爻：${line.sum} · ${names[line.sum]}`;
    state.lines.push(line);
-   setTimeout(()=>renderBuyi(),650); // 重繪，堆上新爻、更新計數
+   setTimeout(()=>renderBuyi(),700);
  };
  inner.appendChild(b);bar.appendChild(inner);
 }
@@ -1142,25 +1254,37 @@ function buyiResult(){
    const qb=document.createElement("div");qb.className="buyi-q";qb.textContent=`你問：${state.question.trim()}`;d.appendChild(qb);
  }
 
- // 本卦卡
+ // 本卦卡（含自然象，如「水天 · 需」）
+ const benNature=natureName(state.lines);
  const hc=document.createElement("div");hc.className="hex-card b-neutral";
  hc.innerHTML=`<span class="glyph">${ben}</span><div class="lab">本卦 · 你目前的處境</div>
-   <h2 class="name">${ben}</h2><div class="state">${GUA_MEAN[ben]||""}</div>`;
+   <h2 class="name">${ben}</h2><div class="theme">${benNature}卦</div><div class="state">${GUA_MEAN[ben]||""}</div>`;
  d.appendChild(hc);
 
- // 卦象六爻圖
+ // 卦象六爻圖 + 逐爻意義（變爻不同色）
  const fig=document.createElement("div");fig.className="panel";
- const stack=document.createElement("div");stack.className="yao-stack";
- for(let i=5;i>=0;i--)stack.insertAdjacentHTML("beforeend",yaoSymbol(state.lines[i],i+1,state.lines[i].changing));
- fig.innerHTML=`<h3>你擲出的卦</h3>`;fig.appendChild(stack);
+ fig.innerHTML=`<h3>你擲出的卦（由下而上）</h3>
+   <p style="font-size:12px;color:var(--ink-faint);margin:-4px 0 12px">${benNature}卦・${ben}。標記為變爻的，是這次占問裡正在變動的關鍵。</p>`;
+ const yl=document.createElement("div");yl.className="yao-list";
+ for(let i=5;i>=0;i--){
+   const ln=state.lines[i],pos=i+1,ch=ln.changing;
+   const barHtml=ln.yin?`<span class="yseg"></span><span class="ygap"></span><span class="yseg"></span>`:`<span class="yseg full"></span>`;
+   const row=document.createElement("div");row.className="yao-detail"+(ch?" changing":"");
+   row.innerHTML=`<div class="yao"><span class="ynum">${pos}</span><span class="ybar">${barHtml}</span>
+       <span class="ychange">${ch?(ln.yin?"○ 老陰":"✕ 老陽"):""}</span></div>
+     <p class="yao-mean">${YAO_MEANING[pos]}${ch?'　<b>← 此爻變動</b>':''}</p>`;
+   yl.appendChild(row);
+ }
+ fig.appendChild(yl);
  d.appendChild(fig);
 
- // 變卦（先呈現兩卦關係）
+ // 變卦（含自然象）
  if(bian){
+   const bianNature=natureName(state.lines.map(l=>({yin:l.changing?!l.yin:l.yin})));
    const bc=document.createElement("div");bc.className="panel";
    bc.innerHTML=`<h3>變卦 · 事情的趨向</h3>
      <div class="change">${ben}<span class="arrow">→</span>${bian}</div>
-     <div class="to-explain"><span class="to-name">${bian}</span><span class="to-desc">${GUA_MEAN[bian]||""}</span></div>
+     <div class="to-explain"><span class="to-name">${bianNature}卦 · ${bian}</span><span class="to-desc">${GUA_MEAN[bian]||""}</span></div>
      <p style="margin-top:12px;text-align:center;font-size:12px;color:var(--ink-faint)">由動爻推出的變卦，代表事情可能發展的方向。</p>`;
    d.appendChild(bc);
  }
@@ -1185,14 +1309,35 @@ function buyiResult(){
  fp.innerHTML=fInner;
  d.appendChild(fp);
 
+ // 領域連動（C 版）＋ 可分享的重點總結
+ const dom=detectDomain(state.question);
+ const sum=document.createElement("div");sum.className="panel summary-panel";
+ const focusBrief=f.reads.map(r=>{
+   if(r.type==="卦辭")return `${r.hex}卦整體`;
+   if(r.type==="爻辭")return `${r.hex}卦第${r.pos}爻${r.primary&&f.reads.length>1?"(主)":""}`;
+   return r.type;
+ }).join("、");
+ let items=[];
+ if(state.question.trim())items.push(`<b>問題</b>：${state.question.trim()}${dom?`（${dom.key}）`:""}`);
+ items.push(`<b>本卦</b>：${benNature}卦・${ben}——${GUA_MEAN[ben]||""}`);
+ if(bian){const bn=natureName(state.lines.map(l=>({yin:l.changing?!l.yin:l.yin})));
+   items.push(`<b>變卦</b>：${bn}卦・${bian}——${GUA_MEAN[bian]||""}`);}
+ items.push(`<b>動爻</b>：${changingPos.length?changingPos.map(p=>"第"+p+"爻").join("、"):"無（六爻不變）"}`);
+ items.push(`<b>重點看</b>：${focusBrief}`);
+ if(dom)items.push(`<b>${dom.frame}的提點</b>：${dom.tip}`);
+ sum.innerHTML=`<h3>本次卜卦重點</h3>
+   <p style="font-size:12px;color:var(--ink-faint);margin:-4px 0 10px">一次看懂，也方便你記下或分享：</p>
+   <ul class="summary-list">${items.map(t=>`<li>${t}</li>`).join("")}</ul>`;
+ d.appendChild(sum);
+
  const dis=document.createElement("p");dis.className="disclaimer";
  dis.innerHTML=`卜易是一面幫你靜心、換個角度思考的鏡子，不是命運的定論。最終的選擇與行動，仍在你自己手上。`;
  d.appendChild(dis);
  app.appendChild(d);
 
  const inner=document.createElement("div");inner.className="bar-inner";
- const home=document.createElement("button");home.className="btn-ghost";home.textContent="回首頁";
- home.onclick=()=>{state.mode="intro";renderIntro();};
+ const home=document.createElement("button");home.className="btn-ghost";home.textContent="回選擇";
+ home.onclick=()=>{state.mode="choose";renderChoose();};
  const again=document.createElement("button");again.className="btn btn-primary";again.textContent="再卜一次";
  again.onclick=()=>{Object.assign(state,{bstep:0,question:"",lines:[]});renderBuyi();};
  inner.appendChild(home);inner.appendChild(again);bar.appendChild(inner);
