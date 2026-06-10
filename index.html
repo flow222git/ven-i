@@ -81,11 +81,36 @@
 
   .hex-card{color:#fff;border-radius:var(--radius);padding:26px 22px;margin-bottom:14px;position:relative;overflow:hidden}
   .hex-card.b-good{background:var(--good)} .hex-card.b-neutral{background:var(--neutral)} .hex-card.b-lack{background:var(--lack)}
-  .hex-card .glyph{position:absolute;right:-6px;top:-18px;font-family:"Noto Serif TC",serif;font-size:130px;font-weight:700;opacity:.10;line-height:1}
+  .hex-card .glyph{position:absolute;right:-6px;top:-18px;font-family:"Noto Serif TC",serif;font-size:130px;font-weight:700;opacity:.08;line-height:1}
   .hex-card .lab{font-size:12px;letter-spacing:.2em;opacity:.85;margin-bottom:8px}
   .hex-card .name{font-family:"Noto Serif TC",serif;font-size:34px;font-weight:700;letter-spacing:.05em;margin:0;line-height:1.2}
   .hex-card .theme{font-size:14px;opacity:.9;margin-top:4px}
   .hex-card .state{font-size:14.5px;line-height:1.75;margin-top:14px;opacity:.97}
+  /* 卡片內：左卦名右六爻 */
+  .hex-card .top-row{display:flex;align-items:center;gap:18px;margin-top:6px;position:relative;z-index:1}
+  .hex-card .top-left{flex:none;min-width:0}
+  .hex-card .top-right{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:12px}
+  /* 內嵌迷你六爻 */
+  .hex-yao-mini{display:flex;flex-direction:column;gap:5px;flex:none}
+  .hex-yao-mini .yrow{display:flex;align-items:center;gap:8px}
+  .hex-yao-mini .ynum{font-size:10px;width:10px;text-align:right;opacity:.6}
+  .hex-yao-mini .ybars{display:flex;gap:6px;width:72px;height:7px}
+  .hex-yao-mini .yseg{flex:1;background:#fff;border-radius:2px;opacity:.96}
+  .hex-yao-mini .ygap{flex:0 0 8px;background:transparent}
+  .hex-yao-mini .ychg{font-size:10px;width:12px;opacity:.85;text-align:left}
+  .hex-yao-mini .divider{height:0;border-top:1px dashed rgba(255,255,255,.4);margin:3px 0}
+  /* 上下卦標籤 */
+  .hex-tri{display:flex;flex-direction:column;justify-content:space-between;font-size:11px;line-height:1.5;flex:none;padding:2px 0}
+  .hex-tri .tri .tlab{opacity:.7;letter-spacing:.12em;font-size:10px}
+  .hex-tri .tri .tnm{font-family:"Noto Serif TC",serif;font-size:14px;font-weight:500;display:block;margin-top:1px}
+  .hex-tri .tri.upper{margin-bottom:14px}
+  /* 本卦重點 */
+  .hex-card .key-divider{height:0;border-top:1px solid rgba(255,255,255,.22);margin:18px 0 12px}
+  .hex-card .key-title{font-size:12px;letter-spacing:.18em;opacity:.9;margin-bottom:8px;font-weight:500}
+  .hex-card .key-list{margin:0;padding:0;list-style:none}
+  .hex-card .key-list li{font-size:13.5px;line-height:1.7;opacity:.96;margin-bottom:5px;padding-left:14px;position:relative}
+  .hex-card .key-list li::before{content:"•";position:absolute;left:0;opacity:.7}
+  .hex-card .key-list b{font-weight:500;opacity:1;margin-right:4px}
 
   .between{background:var(--neutral-soft);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;
     font-size:13.5px;line-height:1.7;color:var(--neutral)}
@@ -203,16 +228,6 @@
   .focus-tag.main{background:var(--accent);color:#fff}
   .focus-txt{font-size:14.5px;line-height:1.7;color:var(--ink)}
   .focus-note{margin:8px 0 0!important;font-size:12.5px!important;color:var(--ink-soft)!important}
-
-  /* 逐爻意義 */
-  .yao-list{display:flex;flex-direction:column;gap:4px}
-  .yao-detail{padding:8px 10px;border-radius:10px}
-  .yao-detail.changing{background:var(--lack-soft)}
-  .yao-detail .yao{margin-bottom:2px}
-  .yao-detail.changing .yseg{background:var(--lack)}
-  .yao-detail .ychange{width:auto;flex:none;font-size:11px;color:var(--lack);white-space:nowrap}
-  .yao-mean{margin:0 0 0 28px;font-size:12.5px;line-height:1.6;color:var(--ink-faint)}
-  .yao-mean b{color:var(--lack);font-weight:500}
 
   /* 重點總結（可分享） */
   .summary-panel{background:var(--card)}
@@ -1013,6 +1028,73 @@ const GUA_MEAN={
  中孚:"誠信於中，由衷而信，以誠感人。",小過:"略有過越，小事可為，宜謙抑謹慎。",
  既濟:"已成而守，大致完成，守成防變。",未濟:"將成未成，仍在過渡，謹慎可達。",
 };
+/* 64 卦本卦重點：核心訊息／此刻態度／避免的事（草稿，以 GUA_MEAN 為骨架擴寫）*/
+const GUA_KEY={
+ 乾:{core:"純粹的創造與剛健",attitude:"主導開創、保持正氣",avoid:"過剛、獨斷、強逞"},
+ 坤:{core:"包容、承載、滋養",attitude:"柔順厚實、穩穩接住",avoid:"強出頭、急於主導"},
+ 屯:{core:"萬事起頭難，混沌初開",attitude:"紮根蓄勢、慢慢開展",avoid:"貪快、急於求成"},
+ 蒙:{core:"蒙昧待啟，需要學習引導",attitude:"謙虛受教、保持開放",avoid:"固執己見、自以為是"},
+ 需:{core:"時機未到，宜等待、蓄力",attitude:"安住、保持誠意",avoid:"躁進、強求結果"},
+ 訟:{core:"爭端與對立浮現",attitude:"求和慎處、退一步看",avoid:"興訟、硬碰硬"},
+ 師:{core:"群眾與紀律，師出有名",attitude:"穩重統御、責任清楚",avoid:"失序、用兵不正"},
+ 比:{core:"親近與結盟，相互依靠",attitude:"擇善而從、誠意連結",avoid:"依附不正、隨波逐流"},
+ 小畜:{core:"力量尚小，暫時積蓄",attitude:"小步前進、量力而為",avoid:"強衝、超出能力"},
+ 履:{core:"如履薄冰，謹慎而行",attitude:"循理而動、戒慎恭敬",avoid:"輕率、粗心大意"},
+ 泰:{core:"通泰順暢，內外交流",attitude:"把握時機、穩穩擴展",avoid:"得意忘形、忽略隱患"},
+ 否:{core:"閉塞不通，上下不交",attitude:"守靜養志、不強出頭",avoid:"硬推、強求突破"},
+ 同人:{core:"與人協力，志同道合",attitude:"開誠合作、共享共榮",avoid:"結黨私利、排斥異己"},
+ 大有:{core:"豐盛富足",attitude:"守正、知分享、惜福",avoid:"驕奢、獨佔"},
+ 謙:{core:"謙虛低調，以退為進",attitude:"謙受益、低調做事",avoid:"炫耀、自滿"},
+ 豫:{core:"安樂與準備，順勢而動",attitude:"預先準備、適度享受",avoid:"逸樂過度、鬆懈失備"},
+ 隨:{core:"隨順情勢，與時俱進",attitude:"擇宜而從、靈活應變",avoid:"盲從、無原則"},
+ 蠱:{core:"積弊待整，振衰起敝",attitude:"著手治理、由內而外整頓",avoid:"拖延、視而不見"},
+ 臨:{core:"居高臨下，親臨其事",attitude:"以德服人、親力親為",avoid:"高壓、官僚式管理"},
+ 觀:{core:"觀察與省思",attitude:"靜觀其變、端正自身",avoid:"妄動、急下結論"},
+ 噬嗑:{core:"咬合突破，排除障礙",attitude:"直面阻力、果斷處理",avoid:"姑息、放任問題擴大"},
+ 賁:{core:"文飾與修整",attitude:"內外相宜、實質為先",avoid:"流於浮華、表裡不一"},
+ 剝:{core:"剝落衰退，由盛轉衰",attitude:"順時止損、保存實力",avoid:"硬撐、無謂消耗"},
+ 復:{core:"一陽來復，生機回返",attitude:"順勢重新開始、慢慢回來",avoid:"急著滿血、過度消耗"},
+ 無妄:{core:"真誠不妄，順其自然",attitude:"守本分、不存非分之想",avoid:"投機、非分妄求"},
+ 大畜:{core:"厚積待發，養精蓄銳",attitude:"蓄大力量、累積實力",avoid:"急於展現、過早出手"},
+ 頤:{core:"養生與自養",attitude:"慎言節食、養正則吉",avoid:"貪嘴、放縱口腹"},
+ 大過:{core:"過度與失衡",attitude:"非常之舉、果斷處置",avoid:"硬撐、勉強為之"},
+ 坎:{core:"重重險陷，身處危難",attitude:"以誠守正、求穩不求快",avoid:"莽撞、做重大決定"},
+ 離:{core:"附麗與光明",attitude:"依附正道、明而有節",avoid:"過度依賴、失去自主"},
+ 咸:{core:"感應與相通",attitude:"以虛受人、真誠交感",avoid:"勉強、刻意造作"},
+ 恆:{core:"恆久守常",attitude:"持之以恆、貴在堅持",avoid:"三心二意、半途而廢"},
+ 遯:{core:"退避隱遁",attitude:"見機而退、全身遠害",avoid:"戀棧、硬撐到底"},
+ 大壯:{core:"強盛壯大，氣勢正盛",attitude:"守正用壯、量力而為",avoid:"恃強躁進、過度逞威"},
+ 晉:{core:"上進與光明，前途漸明",attitude:"順勢而升、光明磊落",avoid:"急於攀升、不擇手段"},
+ 明夷:{core:"光明受傷，賢者蒙難",attitude:"韜光養晦、守正待時",avoid:"鋒芒外露、與惡硬碰"},
+ 家人:{core:"內部與倫常，治家有道",attitude:"各正其位、由內而外",avoid:"界線混亂、外重內輕"},
+ 睽:{core:"乖違背離，意見分歧",attitude:"求同存異、保持對話",avoid:"強求一致、激化對立"},
+ 蹇:{core:"險阻難行，前路艱難",attitude:"止而待援、找夥伴一起",avoid:"孤軍奮戰、硬闖險地"},
+ 解:{core:"緩解與紓困，險難漸消",attitude:"把握化解時機、放下重擔",avoid:"鬆懈過早、舊事重提"},
+ 損:{core:"減損與節制",attitude:"捨得以求益、損下益上",avoid:"捨本逐末、無謂犧牲"},
+ 益:{core:"增益與助長",attitude:"乘時興利、損上益下",avoid:"貪得、忽略根本"},
+ 夬:{core:"決斷與清除",attitude:"當機立斷、去除小患",avoid:"猶豫不決、姑息養奸"},
+ 姤:{core:"不期而遇，陰柔初生",attitude:"防微杜漸、提早辨識",avoid:"輕忽小事、放任發展"},
+ 萃:{core:"聚集與會合",attitude:"順勢成事、凝聚人心",avoid:"強拉結合、爭奪資源"},
+ 升:{core:"上升與積累",attitude:"循序漸進、積小成大",avoid:"拔苗助長、急功近利"},
+ 困:{core:"困頓受限，有志難伸",attitude:"守正待時、保存力氣",avoid:"硬撞牆、消耗自我"},
+ 井:{core:"養人之源，回到根本資源",attitude:"靜而有恆、補給先行",avoid:"不斷輸出、不回頭補給"},
+ 革:{core:"變革與更新",attitude:"順天應人、除舊布新",avoid:"為變而變、躁動革新"},
+ 鼎:{core:"鼎新與重整",attitude:"重組局面、穩固而新",avoid:"重蹈舊習、改而不徹底"},
+ 震:{core:"震動與驚醒",attitude:"雷厲風行、動中守靜",avoid:"驚慌失措、亂中失序"},
+ 艮:{core:"止息與安定",attitude:"當止則止、安於其位",avoid:"強動、無謂奔波"},
+ 漸:{core:"循序漸進",attitude:"按部就班、穩步發展",avoid:"貪快、跳級而進"},
+ 歸妹:{core:"歸屬與名分",attitude:"守正勿躁、定位清楚",avoid:"強求名分、急於成事"},
+ 豐:{core:"豐盛盛大，盛極之時",attitude:"把握時機、防滿招損",avoid:"驕滿自得、忽略隱憂"},
+ 旅:{core:"行旅在外，漂泊不定",attitude:"謹慎柔順、隨遇而安",avoid:"強出頭、招搖過市"},
+ 巽:{core:"順從與滲透",attitude:"柔順入微、漸進而行",avoid:"過度迎合、失去自我"},
+ 兌:{core:"喜悅與交流",attitude:"和悅待人、以誠相說",avoid:"口惠而實不至、空談"},
+ 渙:{core:"渙散與疏通",attitude:"化解凝滯、渙而能聚",avoid:"放任分散、失去焦點"},
+ 節:{core:"節制與分寸",attitude:"適度有節、過猶不及",avoid:"苛刻過度、矯枉過正"},
+ 中孚:{core:"誠信於中",attitude:"由衷而信、以誠感人",avoid:"口是心非、虛應故事"},
+ 小過:{core:"略有過越，小事可為",attitude:"謙抑謹慎、寧過於恭",avoid:"貪大、過度張揚"},
+ 既濟:{core:"已成而守，大致完成",attitude:"守成防變、居安思危",avoid:"鬆懈大意、忽略後續"},
+ 未濟:{core:"將成未成，仍在過渡",attitude:"謹慎前行、不逼自己有結論",avoid:"急著收尾、半途而廢"},
+};
 /* 擲一爻：三枚錢，每枚 2 或 3，和 6~9 */
 function tossLine(){
  const c=[0,0,0].map(()=>Math.random()<0.5?2:3);
@@ -1088,8 +1170,8 @@ function focusRule(lines, ben, bian){
  if(n===1) return {summary:"一爻變，重點看本卦這個變動的爻。",reads:[{hex:ben,type:"爻辭",pos:ch[0],primary:true}],note:""};
  if(n===2) return {summary:"二爻變，看本卦這兩個動爻，以「上面那一爻」為主。",
    reads:[{hex:ben,type:"爻辭",pos:ch[1],primary:true},{hex:ben,type:"爻辭",pos:ch[0]}],note:"上爻為主、下爻為輔。"};
- if(n===3) return {summary:"三爻變，變與不變各半，本卦與變卦的整體卦義都要看。",
-   reads:[{hex:ben,type:"卦辭",primary:true},{hex:bian,type:"卦辭",primary:true}],note:"本卦看現況，變卦看趨向，並重。"};
+ if(n===3) return {summary:"三爻變，本卦與變卦的整體卦義都要看，以本卦為主、變卦為輔。",
+   reads:[{hex:ben,type:"卦辭",primary:true},{hex:bian,type:"卦辭"}],note:"本卦（貞）看現況為主，變卦（悔）看趨向為輔。"};
  if(n===4){ // 讀變卦中「不變」的兩爻，下面那爻為主
    const stay=[1,2,3,4,5,6].filter(p=>!ch.includes(p));
    return {summary:"四爻變，重心已轉到變卦。看變卦中那兩個「不變」的爻，以「下面那一爻」為主。",
@@ -1171,7 +1253,7 @@ function renderChoose(){
    ()=>{state.mode="wenyi";Object.assign(state,{step:0,topic:null,selected:[],followups:[],stage:null,position:null,freeText:"",result:null,confirm:null,activeHex:null});render();});
  make("卜易","以古錢占問，求一卦指引",
    "靜心想著你的問題，擲六次古錢、得出一卦與變卦——適合面對抉擇、想聽聽古人怎麼說時。",
-   ()=>{state.mode="buyi";Object.assign(state,{bstep:0,question:"",lines:[]});renderBuyi();});
+   ()=>{state.mode="buyi";Object.assign(state,{bstep:0,question:"",lines:[],bActiveHex:null});renderBuyi();});
  d.appendChild(en);app.appendChild(d);
 }
 
@@ -1247,36 +1329,75 @@ function buyiResult(){
  d.appendChild(backHomeLink());
  const ben=buildHex(state.lines);
  const changingPos=state.lines.map((l,i)=>l.changing?i+1:0).filter(x=>x);
- const bian=changingPos.length?transformedHex(state.lines):null;
+ const n=changingPos.length;
+ const bian=n?transformedHex(state.lines):null;
+ const allowSwitch=(n===3 && bian);
+ const activeHex=(allowSwitch && state.bActiveHex===bian)?bian:ben;
+ const isVariant=(activeHex===bian && allowSwitch);
 
  d.insertAdjacentHTML("beforeend",`<div class="q-eyebrow" style="margin-top:6px">卜易 · 卦象</div>`);
  if(state.question.trim()){
    const qb=document.createElement("div");qb.className="buyi-q";qb.textContent=`你問：${state.question.trim()}`;d.appendChild(qb);
  }
 
- // 本卦卡（含自然象，如「水天 · 需」）
- const benNature=natureName(state.lines);
- const hc=document.createElement("div");hc.className="hex-card b-neutral";
- hc.innerHTML=`<span class="glyph">${ben}</span><div class="lab">本卦 · 你目前的處境</div>
-   <h2 class="name">${ben}</h2><div class="theme">${benNature}卦</div><div class="state">${GUA_MEAN[ben]||""}</div>`;
- d.appendChild(hc);
-
- // 卦象六爻圖 + 逐爻意義（變爻不同色）
- const fig=document.createElement("div");fig.className="panel";
- fig.innerHTML=`<h3>你擲出的卦（由下而上）</h3>
-   <p style="font-size:12px;color:var(--ink-faint);margin:-4px 0 12px">${benNature}卦・${ben}。標記為變爻的，是這次占問裡正在變動的關鍵。</p>`;
- const yl=document.createElement("div");yl.className="yao-list";
- for(let i=5;i>=0;i--){
-   const ln=state.lines[i],pos=i+1,ch=ln.changing;
-   const barHtml=ln.yin?`<span class="yseg"></span><span class="ygap"></span><span class="yseg"></span>`:`<span class="yseg full"></span>`;
-   const row=document.createElement("div");row.className="yao-detail"+(ch?" changing":"");
-   row.innerHTML=`<div class="yao"><span class="ynum">${pos}</span><span class="ybar">${barHtml}</span>
-       <span class="ychange">${ch?(ln.yin?"○ 老陰":"✕ 老陽"):""}</span></div>
-     <p class="yao-mean">${YAO_MEANING[pos]}${ch?'　<b>← 此爻變動</b>':''}</p>`;
-   yl.appendChild(row);
+ // 三爻變：本卦／變卦切換器
+ if(allowSwitch){
+   const sw=document.createElement("div");sw.className="hex-switch";
+   sw.innerHTML=`<span class="sw-hint">三爻變，以本卦為主、變卦為輔，點點看：</span>`;
+   const tags=document.createElement("div");tags.className="sw-tags";
+   [{hex:ben,lab:"本卦"},{hex:bian,lab:"變卦"}].forEach(o=>{
+     const themeShort=(GUA_KEY[o.hex]&&GUA_KEY[o.hex].core)||(GUA_MEAN[o.hex]||"").split("，")[0];
+     const b=document.createElement("button");
+     b.className="sw-tag"+(o.hex===activeHex?" on":"");
+     b.innerHTML=`<span class="g">${o.lab}・${o.hex}</span><span class="t">${themeShort}</span>`;
+     b.onclick=()=>{state.bActiveHex=o.hex;renderBuyi();};
+     tags.appendChild(b);
+   });
+   sw.appendChild(tags);
+   d.appendChild(sw);
  }
- fig.appendChild(yl);
- d.appendChild(fig);
+
+ // 本卦／變卦卡（根據 activeHex 動態）
+ const cardLines=isVariant?state.lines.map(l=>({yin:l.changing?!l.yin:l.yin,changing:false})):state.lines;
+ const cardNature=natureName(cardLines);
+ const cardTris=hexTrigrams(cardLines);
+ const cardUpperNature=TRIGRAM_NATURE[cardTris.upper];
+ const cardLowerNature=TRIGRAM_NATURE[cardTris.lower];
+ let yaoHtml="";
+ for(let i=5;i>=0;i--){
+   const ln=cardLines[i],pos=i+1,ch=ln.changing;
+   const bars=ln.yin?`<span class="yseg"></span><span class="ygap"></span><span class="yseg"></span>`:`<span class="yseg"></span>`;
+   const chg=ch?(ln.yin?"○":"✕"):"";
+   yaoHtml+=`<div class="yrow"><span class="ynum">${pos}</span><span class="ybars">${bars}</span><span class="ychg">${chg}</span></div>`;
+   if(i===3)yaoHtml+=`<div class="divider"></div>`;
+ }
+ const k=GUA_KEY[activeHex]||{core:GUA_MEAN[activeHex]||"",attitude:"",avoid:""};
+ const cardLab=isVariant?"變卦 · 事情的趨向":"本卦 · 你目前的處境";
+ const keyTitle=isVariant?"變卦重點":"本卦重點";
+ const hc=document.createElement("div");hc.className="hex-card b-neutral";
+ hc.innerHTML=`<span class="glyph">${activeHex}</span><div class="lab">${cardLab}</div>
+   <div class="top-row">
+     <div class="top-left">
+       <h2 class="name">${activeHex}</h2>
+       <div class="theme">${cardNature}卦</div>
+     </div>
+     <div class="top-right">
+       <div class="hex-yao-mini">${yaoHtml}</div>
+       <div class="hex-tri">
+         <div class="tri upper"><span class="tlab">上卦</span><span class="tnm">${cardTris.upper}・${cardUpperNature}</span></div>
+         <div class="tri lower"><span class="tlab">下卦</span><span class="tnm">${cardTris.lower}・${cardLowerNature}</span></div>
+       </div>
+     </div>
+   </div>
+   <div class="state">${GUA_MEAN[activeHex]||""}</div>
+   <div class="key-divider"></div>
+   <div class="key-title">${keyTitle}</div>
+   <ul class="key-list">
+     <li><b>核心訊息：</b>${k.core}</li>
+     <li><b>此刻態度：</b>${k.attitude}</li>
+     <li><b>避免的事：</b>${k.avoid}</li>
+   </ul>`;
+ d.appendChild(hc);
 
  // 變卦（含自然象）
  if(bian){
@@ -1319,7 +1440,7 @@ function buyiResult(){
  }).join("、");
  let items=[];
  if(state.question.trim())items.push(`<b>問題</b>：${state.question.trim()}${dom?`（${dom.key}）`:""}`);
- items.push(`<b>本卦</b>：${benNature}卦・${ben}——${GUA_MEAN[ben]||""}`);
+ items.push(`<b>本卦</b>：${natureName(state.lines)}卦・${ben}——${GUA_MEAN[ben]||""}`);
  if(bian){const bn=natureName(state.lines.map(l=>({yin:l.changing?!l.yin:l.yin})));
    items.push(`<b>變卦</b>：${bn}卦・${bian}——${GUA_MEAN[bian]||""}`);}
  items.push(`<b>動爻</b>：${changingPos.length?changingPos.map(p=>"第"+p+"爻").join("、"):"無（六爻不變）"}`);
@@ -1339,12 +1460,27 @@ function buyiResult(){
  const home=document.createElement("button");home.className="btn-ghost";home.textContent="回選擇";
  home.onclick=()=>{state.mode="choose";renderChoose();};
  const again=document.createElement("button");again.className="btn btn-primary";again.textContent="再卜一次";
- again.onclick=()=>{Object.assign(state,{bstep:0,question:"",lines:[]});renderBuyi();};
+ again.onclick=()=>{Object.assign(state,{bstep:0,question:"",lines:[],bActiveHex:null});renderBuyi();};
  inner.appendChild(home);inner.appendChild(again);bar.appendChild(inner);
 }
 
-state.mode="intro";state.bstep=0;state.question="";state.lines=[];
+state.mode="intro";state.bstep=0;state.question="";state.lines=[];state.bActiveHex=null;
 renderIntro();
+
+/* 開發測試用：console 輸入 testTriChange() 直達三爻變結果頁 */
+window.testTriChange=function(){
+ state.mode="buyi";state.bstep=2;state.question="測試三爻變";state.bActiveHex=null;
+ state.lines=[
+   {yin:false,changing:true},   // 1: 老陽（變）
+   {yin:true, changing:false},  // 2: 少陰
+   {yin:true, changing:true},   // 3: 老陰（變）
+   {yin:false,changing:false},  // 4: 少陽
+   {yin:false,changing:true},   // 5: 老陽（變）
+   {yin:true, changing:false},  // 6: 少陰
+ ];
+ renderBuyi();
+};
+console.log("%c[dev] 輸入 testTriChange() 直達三爻變結果頁","color:#3a5a52");
 </script>
 </body>
 </html>
