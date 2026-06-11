@@ -1619,6 +1619,7 @@ function _jteHandleCredential(resp){
  localStorage.setItem('jte_user_picture',p.picture||'');
  if(window.google&&google.accounts)google.accounts.id.disableAutoSelect();
  var m=document.getElementById('jte-login-modal');if(m)m.style.display='none';
+ if(window.jteUserbarRefresh)window.jteUserbarRefresh();
  if(_jtePendingSave){_jtePendingSave();_jtePendingSave=null;}
 }
 function _jteInitGoogle(){
