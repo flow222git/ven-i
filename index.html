@@ -11,6 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- 登入＋記錄：沿用練息場平台的 Google 登入 + Firebase/Firestore -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --ink:#23211c; --ink-soft:#5c574c; --ink-faint:#938c7e;
@@ -278,6 +282,54 @@
   .reminder{text-align:center;font-family:"Noto Serif TC",serif;font-size:17px;line-height:1.7;color:var(--ink);padding:6px 6px 2px}
   .reminder .qm{color:var(--accent);font-size:22px}
   .disclaimer{font-size:11.5px;color:var(--ink-faint);text-align:center;margin:24px 0 0;line-height:1.7}
+
+  /* —— 保存區（結論下方：筆記＋存這次）—— */
+  .save-block{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px;margin-top:18px}
+  .save-title{font-family:"Noto Serif TC",serif;font-size:15px;font-weight:500;color:var(--ink);margin-bottom:10px}
+  .save-note{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:10px 12px;
+    font-family:inherit;font-size:13.5px;line-height:1.7;color:var(--ink);resize:vertical;min-height:62px}
+  .save-note:focus{outline:none;border-color:var(--accent)}
+  .save-actions{display:flex;gap:10px;margin-top:12px}
+  .save-actions button{flex:1;border-radius:999px;padding:11px;font-size:13.5px;font-family:inherit;cursor:pointer;border:1px solid var(--line)}
+  .save-skip,.hist-cancel{background:transparent;color:var(--ink-faint)}
+  .save-do,.hist-save{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
+  .save-actions button:active{transform:scale(.98)}
+  .save-done{font-size:13.5px;color:var(--accent);line-height:1.7}
+  .save-done .save-view{color:var(--accent);text-decoration:underline;cursor:pointer}
+
+  /* —— choose 頁的歷史入口 —— */
+  .hist-entry-link{display:block;width:100%;margin-top:14px;background:transparent;border:none;
+    font-family:inherit;font-size:13px;color:var(--ink-faint);cursor:pointer;text-align:center;letter-spacing:.04em}
+  .hist-entry-link:active{opacity:.6}
+
+  /* —— 我的占問歷史 —— */
+  .hist-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+  .hist-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .hist-badge{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:500;color:#fff}
+  .hist-badge.wy{background:var(--neutral)} .hist-badge.by{background:var(--accent)}
+  .hist-hex{font-family:"Noto Serif TC",serif;font-size:17px;font-weight:700;color:var(--ink)}
+  .hist-tone{font-size:11.5px;color:var(--ink-faint)}
+  .hist-when{margin-left:auto;font-size:11px;color:var(--ink-faint)}
+  .hist-body{font-size:13px;color:var(--ink-soft);line-height:1.65;margin-top:7px}
+  .hist-note-view{font-size:13px;color:var(--ink);line-height:1.7;margin-top:8px;
+    background:var(--accent-soft);border-radius:10px;padding:8px 11px}
+  .hist-note-view .hist-empty{color:var(--ink-faint)}
+  .hist-ops{display:flex;gap:14px;margin-top:10px}
+  .hist-ops button{background:none;border:none;font-family:inherit;font-size:12.5px;cursor:pointer;padding:0}
+  .hist-edit{color:var(--accent)} .hist-del{color:var(--lack)}
+  .hist-edit-area{margin-top:10px}
+  .hist-ta{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:9px 11px;
+    font-family:inherit;font-size:13.5px;line-height:1.7;color:var(--ink);resize:vertical}
+  .hist-ta:focus{outline:none;border-color:var(--accent)}
+
+  /* —— Google 登入 modal —— */
+  #jte-login-modal{display:none;position:fixed;inset:0;background:rgba(20,18,14,.45);z-index:9999;align-items:center;justify-content:center;padding:18px}
+  #jte-login-modal .jm-box{background:var(--card);border-radius:20px;padding:26px 22px 24px;width:100%;max-width:380px;box-shadow:0 16px 48px rgba(0,0,0,.22)}
+  #jte-login-modal .jm-title{font-family:"Noto Serif TC",serif;font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px}
+  #jte-login-modal .jm-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:18px}
+  #jte-gsi-btn{display:flex;justify-content:center;margin-bottom:12px;min-height:40px}
+  #jte-login-modal .jm-skip{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:999px;
+    padding:10px;font-size:12.5px;color:var(--ink-faint);cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -965,6 +1017,11 @@ function renderReport(){
  ext.innerHTML=extInner;
  d.appendChild(ext);
 
+ // 保存區：筆記＋存這次（每次由使用者決定）
+ appendSaveBlock(d,'WenYi',function(){
+   return {topic:state.topic||'',mainHex:mainHex,tone:tone,toneLabel:toneInfo[0],summary:(M.theme||'')+'｜'+(M.state[tone]||'')};
+ });
+
  // 免責聲明：用 appendChild，不可用 innerHTML+=（會清掉前面所有按鈕的點擊事件）
  const dis=document.createElement("p");dis.className="disclaimer";
  dis.innerHTML=`問易提供的是一張「狀態地圖」，不是命運預言，也不能取代專業心理或醫療協助。<br>若你正承受難以承受的壓力，請讓信任的人或專業資源陪你一起看。`;
@@ -1254,7 +1311,12 @@ function renderChoose(){
  make("卜易","以古錢占問，求一卦指引",
    "靜心想著你的問題，擲六次古錢、得出一卦與變卦——適合面對抉擇、想聽聽古人怎麼說時。",
    ()=>{state.mode="buyi";Object.assign(state,{bstep:0,question:"",lines:[],bActiveHex:null});renderBuyi();});
- d.appendChild(en);app.appendChild(d);
+ d.appendChild(en);
+ const histLink=document.createElement("button");histLink.className="hist-entry-link";
+ histLink.textContent="我的占問歷史 →";
+ histLink.onclick=()=>{state.mode="history";renderHistory();};
+ d.appendChild(histLink);
+ app.appendChild(d);
 }
 
 /* ---------- 卜易流程 ---------- */
@@ -1451,6 +1513,13 @@ function buyiResult(){
    <ul class="summary-list">${items.map(t=>`<li>${t}</li>`).join("")}</ul>`;
  d.appendChild(sum);
 
+ // 保存區：筆記＋存這次（每次由使用者決定）
+ appendSaveBlock(d,'BuYi',function(){
+   return {question:state.question.trim(),ben:ben,bian:bian||'',
+     changing:changingPos.slice(),
+     changingLabel:changingPos.length?(changingPos.map(function(p){return '第'+p+'爻';}).join('、')+'變'):'六爻不變'};
+ });
+
  const dis=document.createElement("p");dis.className="disclaimer";
  dis.innerHTML=`卜易是一面幫你靜心、換個角度思考的鏡子，不是命運的定論。最終的選擇與行動，仍在你自己手上。`;
  d.appendChild(dis);
@@ -1462,6 +1531,191 @@ function buyiResult(){
  const again=document.createElement("button");again.className="btn btn-primary";again.textContent="再卜一次";
  again.onclick=()=>{Object.assign(state,{bstep:0,question:"",lines:[],bActiveHex:null});renderBuyi();};
  inner.appendChild(home);inner.appendChild(again);bar.appendChild(inner);
+}
+
+/* ============================================================
+   登入 ＋ 記錄 ＋ 筆記（沿用 jte-platform 的 Google 登入 / Firestore）
+   ============================================================ */
+var _db=null;
+function initFirebase(){
+ if(typeof firebase==='undefined'){setTimeout(initFirebase,200);return;}
+ try{
+   if(firebase.apps.length===0){
+     firebase.initializeApp({
+       apiKey:"AIzaSyBRZ1TNVMxOeJfyvGz4HhdlBzlKL0GIAfg",
+       authDomain:"jointoenjoy.firebaseapp.com",
+       projectId:"jointoenjoy",
+       storageBucket:"jointoenjoy.firebasestorage.app",
+       messagingSenderId:"978242729427",
+       appId:"1:978242729427:web:ab31364f21c67c2ab56b26"
+     });
+   }
+   _db=firebase.firestore();
+ }catch(e){console.warn('Firebase init failed',e);}
+}
+window.addEventListener('load',initFirebase);
+
+/* —— 使用者 / 儲存 key（與平台一致：登入後用 per-user key）—— */
+function jteEmail(){return localStorage.getItem('jte_user_email')||'';}
+function jteKey(){const e=jteEmail();return e?'jte_daily_'+e.replace(/[^a-zA-Z0-9]/g,'_'):'jte_daily_v1';}
+function jteTodayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function jteAll(){try{return JSON.parse(localStorage.getItem(jteKey())||'{}')}catch(e){return{}}}
+function jteFsSave(dateKey,day){
+ const e=jteEmail();if(!_db||!e)return;
+ _db.collection('users').doc(e.toLowerCase().trim()).collection('daily').doc(dateKey).set(day,{merge:true})
+   .catch(function(err){console.warn('Firestore write failed',err);});
+}
+/* 寫一筆記錄到當天 linked[]（localStorage + Firestore）*/
+function jteWriteRecord(rec){
+ const k=jteKey(),today=jteTodayKey(),all=jteAll();
+ const day=all[today]||{moods:[],energy:5,note:'',tags:[],linked:[],createdAt:new Date().toISOString()};
+ if(!day.linked)day.linked=[];
+ day.linked.push(rec);day.updatedAt=new Date().toISOString();
+ all[today]=day;localStorage.setItem(k,JSON.stringify(all));
+ jteFsSave(today,day);
+}
+/* 列出本帳號所有 ven-i 記錄（跨日攤平、時間倒序）*/
+function jteListRecords(){
+ const all=jteAll(),out=[];
+ Object.keys(all).forEach(function(dk){
+   (all[dk].linked||[]).forEach(function(l){
+     if(l.source==='WenYi'||l.source==='BuYi')out.push(l);
+   });
+ });
+ out.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
+ return out;
+}
+function _jteMutate(id,fn){
+ const k=jteKey(),all=jteAll();let touched=null;
+ Object.keys(all).forEach(function(dk){
+   if(!all[dk].linked)return;
+   all[dk].linked.forEach(function(l){if(l.id===id){fn(l,dk);touched=dk;}});
+ });
+ if(touched){all[touched].updatedAt=new Date().toISOString();localStorage.setItem(k,JSON.stringify(all));jteFsSave(touched,all[touched]);}
+}
+function jteUpdateNote(id,note){_jteMutate(id,function(l){l.note=note;l._writtenAt=new Date().toISOString();});}
+function jteDeleteRecord(id){
+ const k=jteKey(),all=jteAll();let touched=null;
+ Object.keys(all).forEach(function(dk){
+   if(!all[dk].linked)return;
+   const before=all[dk].linked.length;
+   all[dk].linked=all[dk].linked.filter(function(l){return l.id!==id;});
+   if(all[dk].linked.length!==before)touched=dk;
+ });
+ if(touched){all[touched].updatedAt=new Date().toISOString();localStorage.setItem(k,JSON.stringify(all));jteFsSave(touched,all[touched]);}
+}
+
+/* —— Google 登入（惰性：按「存這次」才跳；未登入也能正常問卦）—— */
+var _jtePendingSave=null,_jteGoogleReady=false;
+var JTE_CLIENT_ID='1052529942242-jvr7ik3f7r987l5lq889nrfkjheoovg7.apps.googleusercontent.com';
+function _jteHandleCredential(resp){
+ var p=JSON.parse(atob(resp.credential.split('.')[1]));
+ localStorage.setItem('jte_user_email',p.email);
+ localStorage.setItem('jte_user_name',p.name||p.email);
+ localStorage.setItem('jte_user_picture',p.picture||'');
+ if(window.google&&google.accounts)google.accounts.id.disableAutoSelect();
+ var m=document.getElementById('jte-login-modal');if(m)m.style.display='none';
+ if(_jtePendingSave){_jtePendingSave();_jtePendingSave=null;}
+}
+function _jteInitGoogle(){
+ if(_jteGoogleReady)return;_jteGoogleReady=true;
+ google.accounts.id.initialize({client_id:JTE_CLIENT_ID,ux_mode:'popup',callback:_jteHandleCredential});
+}
+var _jteGsiTimer=setInterval(function(){
+ if(window.google&&google.accounts){clearInterval(_jteGsiTimer);_jteInitGoogle();}
+},300);
+function jteCheckLoginThenSave(saveFn){
+ if(jteEmail()){saveFn();return;}
+ _jtePendingSave=saveFn;
+ var modal=document.getElementById('jte-login-modal');modal.style.display='flex';
+ var t=setInterval(function(){
+   if(_jteGoogleReady&&window.google){
+     clearInterval(t);
+     var btn=document.getElementById('jte-gsi-btn');
+     if(btn&&!btn.hasChildNodes())
+       google.accounts.id.renderButton(btn,{theme:'outline',size:'large',width:280,text:'signin_with',locale:'zh-TW'});
+   }
+ },100);
+}
+function jteCloseLogin(){var m=document.getElementById('jte-login-modal');if(m)m.style.display='none';_jtePendingSave=null;}
+
+/* —— 結果頁「保存區」：問易/卜易共用。buildRec(note) 回傳該模式的記錄欄位 —— */
+function appendSaveBlock(container,source,buildRec){
+ const wrap=document.createElement("div");wrap.className="save-block";
+ wrap.innerHTML=`<div class="save-title">想留下這次嗎？寫點心得，存進你的記錄。</div>
+   <textarea class="save-note" rows="3" placeholder="這次問易給你的感想、提醒或行動（選填）…"></textarea>
+   <div class="save-actions"><button class="save-skip">這次不存</button><button class="save-do">存這次</button></div>
+   <div class="save-done" style="display:none">已存到你的記錄 ✓　<a class="save-view">看我的占問歷史 →</a></div>`;
+ const ta=wrap.querySelector(".save-note");
+ wrap.querySelector(".save-do").onclick=function(){
+   const note=ta.value.trim();
+   jteCheckLoginThenSave(function(){
+     const _id=(source==='WenYi'?'wy':'by')+'-'+Date.now();
+     const rec=Object.assign({id:_id,recordId:_id,source:source,ts:new Date().toISOString(),note:note},buildRec(note));
+     jteWriteRecord(rec);
+     wrap.querySelector(".save-title").style.display='none';
+     ta.style.display='none';
+     wrap.querySelector(".save-actions").style.display='none';
+     wrap.querySelector(".save-done").style.display='block';
+   });
+ };
+ wrap.querySelector(".save-skip").onclick=function(){
+   ta.style.display='none';
+   wrap.querySelector(".save-actions").style.display='none';
+   wrap.querySelector(".save-title").textContent='好，這次先不存。';
+ };
+ wrap.querySelector(".save-view").onclick=function(){state.mode="history";renderHistory();};
+ container.appendChild(wrap);
+}
+
+/* —— 我的占問歷史 —— */
+function renderHistory(){
+ clearAll();
+ const d=document.createElement("div");d.className="step";
+ d.appendChild(backHomeLink());
+ d.insertAdjacentHTML("beforeend",`<h2 class="q" style="margin-top:4px">我的占問歷史</h2>`);
+ if(!jteEmail()){
+   d.insertAdjacentHTML("beforeend",`<p class="q-hint">登入後，就能看到你存過的問易與卜易記錄。</p>`);
+   const btn=document.createElement("button");btn.className="btn btn-primary";btn.style.marginTop="14px";btn.textContent="登入查看";
+   btn.onclick=function(){jteCheckLoginThenSave(function(){renderHistory();});};
+   d.appendChild(btn);app.appendChild(d);return;
+ }
+ const list=jteListRecords();
+ if(!list.length){
+   d.insertAdjacentHTML("beforeend",`<p class="q-hint">還沒有存過記錄。問一次易，覺得值得留就存下來吧。</p>`);
+   app.appendChild(d);return;
+ }
+ list.forEach(function(l){
+   const card=document.createElement("div");card.className="hist-card";
+   const when=(l.ts||'').slice(0,16).replace('T',' ');
+   let head,body;
+   if(l.source==='WenYi'){
+     head=`<span class="hist-badge wy">問易</span><span class="hist-hex">${l.mainHex||''}</span><span class="hist-tone">${l.toneLabel||''}</span>`;
+     body=`${l.topic?('主題：'+l.topic+'　'):''}${l.summary||''}`;
+   }else{
+     head=`<span class="hist-badge by">卜易</span><span class="hist-hex">${l.ben||''}${l.bian?('→'+l.bian):''}</span><span class="hist-tone">${l.changingLabel||''}</span>`;
+     body=`${l.question?('問：'+l.question):'（未填問題）'}`;
+   }
+   card.innerHTML=`<div class="hist-head">${head}<span class="hist-when">${when}</span></div>
+     <div class="hist-body">${body}</div>
+     <div class="hist-note-view">${l.note?('📝 '+l.note):'<span class="hist-empty">（沒有筆記）</span>'}</div>
+     <div class="hist-ops"><button class="hist-edit">編輯筆記</button><button class="hist-del">刪除</button></div>`;
+   card.querySelector(".hist-edit").onclick=function(){
+     if(card.querySelector(".hist-edit-area"))return;
+     card.querySelector(".hist-note-view").style.display='none';
+     card.querySelector(".hist-ops").style.display='none';
+     const area=document.createElement("div");area.className="hist-edit-area";
+     area.innerHTML=`<textarea class="hist-ta" rows="3"></textarea>
+       <div class="save-actions"><button class="hist-cancel">取消</button><button class="hist-save">儲存</button></div>`;
+     area.querySelector(".hist-ta").value=l.note||'';
+     card.appendChild(area);
+     area.querySelector(".hist-save").onclick=function(){jteUpdateNote(l.id,area.querySelector(".hist-ta").value.trim());renderHistory();};
+     area.querySelector(".hist-cancel").onclick=function(){renderHistory();};
+   };
+   card.querySelector(".hist-del").onclick=function(){if(confirm('確定刪除這筆記錄？')){jteDeleteRecord(l.id);renderHistory();}};
+   d.appendChild(card);
+ });
+ app.appendChild(d);
 }
 
 state.mode="intro";state.bstep=0;state.question="";state.lines=[];state.bActiveHex=null;
@@ -1482,5 +1736,15 @@ window.testTriChange=function(){
 };
 console.log("%c[dev] 輸入 testTriChange() 直達三爻變結果頁","color:#3a5a52");
 </script>
+
+<!-- Google 登入 modal（按「存這次」未登入時跳出）-->
+<div id="jte-login-modal">
+  <div class="jm-box">
+    <div class="jm-title">登入以儲存這次</div>
+    <div class="jm-desc">用 Google 登入，這次的結果與筆記會存進你的帳號，並同步到練息場平台的記錄。</div>
+    <div id="jte-gsi-btn"></div>
+    <button class="jm-skip" onclick="jteCloseLogin()">先不要</button>
+  </div>
+</div>
 </body>
 </html>
