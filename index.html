@@ -1608,11 +1608,33 @@ function jteFsLoadDays(){
   .then(function(snap){var days={};snap.forEach(function(doc){days[doc.id]=doc.data();});return days;})
   .catch(function(){return {};});
 }
+/* 舊明文雲端記錄遷移：只在解鎖時、把含明文私密的雲端記錄經 toCloudRec 重新加密上傳（覆蓋舊明文為密文）。
+   idempotent（已加密者 needsMigration=false 跳過）、容錯（單筆/單日失敗不影響顯示）、不阻塞、不碰本機 localStorage 明文。*/
+function jteMigrateCloudIfNeeded(cloudDays){
+ if(!window.JtePrivacy||!JtePrivacy.isUnlocked()||!window.VenIPrivacy)return Promise.resolve();
+ var jobs=[];
+ Object.keys(cloudDays||{}).forEach(function(dk){
+   var linked=(cloudDays[dk]&&cloudDays[dk].linked)||[];
+   if(!linked.some(VenIPrivacy.needsMigration))return; // 該天無明文殘留→不動
+   jobs.push(Promise.all(linked.map(function(r){
+     return VenIPrivacy.needsMigration(r)?VenIPrivacy.toCloudRec(r):Promise.resolve(r); // 已是密文者原樣保留（含 priv）
+   })).then(function(cl){
+     return jteFsSaveRaw(dk, Object.assign({}, cloudDays[dk], {linked:cl}));
+   }).catch(function(e){console.warn('migrate failed',dk,e);}));
+ });
+ return Promise.all(jobs);
+}
+/* 直接寫入已脫敏/加密好的 cloudDay（linked 已是雲端形態），不再經 toCloudRec（避免重複處理） */
+function jteFsSaveRaw(dateKey,cloudDay){
+ const e=jteEmail();if(!_db||!e)return Promise.resolve();
+ return _db.collection('users').doc(e.toLowerCase().trim()).collection('daily').doc(dateKey).set(cloudDay,{merge:true});
+}
 /* async 版：把雲端 daily 併回本機、hydrate localStorage，回傳攤平清單 */
 function jteListRecordsMerged(){
  const localAll=jteAll();
  if(!window.VenIPrivacy)return Promise.resolve(_flattenVenI(localAll));
  return jteFsLoadDays().then(function(cloudDays){
+   try{jteMigrateCloudIfNeeded(cloudDays);}catch(e){console.warn('migrate trigger failed',e);} // 背景觸發，不 await、不阻塞顯示
    return window.VenIPrivacy.mergeCloud(localAll,cloudDays);
  }).then(function(mergedAll){
    try{localStorage.setItem(jteKey(),JSON.stringify(mergedAll));}catch(e){} // hydrate 本機（含已解密私密），讓編輯/刪除沿用既有機制

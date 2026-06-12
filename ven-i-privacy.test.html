@@ -93,6 +93,12 @@ async function run(){
     eq(bens.join(','), '乾為天,坤為地', '兩筆都在、沒被互相去重吃掉');
   });
 
+  await check('needsMigration：有明文 question 且無 priv → true；已加密 → false', async () => {
+    eq(VenIPrivacy.needsMigration({source:'BuYi', question:'明文', ben:'乾'}), true, '明文需遷移');
+    eq(VenIPrivacy.needsMigration({source:'BuYi', priv:{question:{iv:'a',ct:'b'}}, ben:'乾'}), false, '已加密不需');
+    eq(VenIPrivacy.needsMigration({source:'BuYi', ben:'乾'}), false, '無私密欄位不需');
+  });
+
   log('---'); log('DONE pass=' + pass + ' fail=' + fail);
   document.title = fail ? ('FAIL ' + fail) : 'OK';
   window.__done = true;

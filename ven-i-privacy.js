@@ -44,5 +44,12 @@
   }
   function _push(all, d, rec){ if (!all[d]) all[d] = { linked: [] }; if (!all[d].linked) all[d].linked = []; all[d].linked.push(rec); }
 
-  root.VenIPrivacy = { PRIVATE_FIELDS: PRIVATE_FIELDS, toCloudRec: toCloudRec, mergeCloud: mergeCloud };
+  // 純判斷：雲端記錄是否殘留明文私密欄位（需就地加密遷移）。已加密（priv）或無私密欄位 → false。
+  function needsMigration(rec){
+    if (!rec) return false;
+    for (var i=0;i<PRIVATE_FIELDS.length;i++){ var f=PRIVATE_FIELDS[i]; if (typeof rec[f]==='string' && rec[f]!=='') return true; }
+    return false;
+  }
+
+  root.VenIPrivacy = { PRIVATE_FIELDS: PRIVATE_FIELDS, toCloudRec: toCloudRec, mergeCloud: mergeCloud, needsMigration: needsMigration };
 })(typeof window !== 'undefined' ? window : this);
