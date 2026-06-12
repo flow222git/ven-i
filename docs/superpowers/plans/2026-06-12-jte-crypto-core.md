@@ -10,6 +10,11 @@
 
 **檔案路徑說明：** 本計畫產生的程式檔都在 hub repo `/Users/chenchiehyi/vscode/jte-platform-2026/`；本計畫文件本身放在 ven-i repo 的 `docs/`（與 spec 同處）。
 
+> **執行後調整（2026-06-12，經兩階段審查）：**
+> - **狀態＝完成**，14/14 綠、未 push（commit `0c8411d`→`f58d059`，hub repo）。
+> - PBKDF2 iteration 由 250000 → **600000**（OWASP 2023）；`unlock*`/`rewrap` 改**從 `blob.kdf` 讀** iterations/hash（前向相容，未來再調參舊資料仍解得開），非硬編常數。
+> - 因本機**無 node/deno/bun**，且 Chrome `--dump-dom` 抓不到 async crypto 結果，驗證改用 committed 的 **`jte-crypto-testrun.py`**（python3 stdlib：起 http server＋接 `POST /__result`、真實時間跑 headless Chrome、輪詢結果）。驗證指令＝ `python3 jte-crypto-testrun.py`（取代下方各 Task 內的 `--dump-dom` 指令）。
+
 ---
 
 ## File Structure
