@@ -1566,8 +1566,12 @@ function jteTodayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.ge
 function jteAll(){try{return JSON.parse(localStorage.getItem(jteKey())||'{}')}catch(e){return{}}}
 function jteFsSave(dateKey,day){
  const e=jteEmail();if(!_db||!e)return;
- _db.collection('users').doc(e.toLowerCase().trim()).collection('daily').doc(dateKey).set(day,{merge:true})
-   .catch(function(err){console.warn('Firestore write failed',err);});
+ const linked=day.linked||[];
+ Promise.all(linked.map(function(r){return (window.VenIPrivacy?window.VenIPrivacy.toCloudRec(r):Promise.resolve(r));}))
+  .then(function(cloudLinked){
+    const cloudDay=Object.assign({},day,{linked:cloudLinked});
+    return _db.collection('users').doc(e.toLowerCase().trim()).collection('daily').doc(dateKey).set(cloudDay,{merge:true});
+  }).catch(function(err){console.warn('Firestore write failed',err);});
 }
 /* 寫一筆記錄到當天 linked[]（localStorage + Firestore）*/
 function jteWriteRecord(rec){
@@ -1744,6 +1748,11 @@ window.testTriChange=function(){
 };
 console.log("%c[dev] 輸入 testTriChange() 直達三爻變結果頁","color:#3a5a52");
 </script>
+
+<!-- 隱私/加密共用模組（Plan 1/2）＋ 卜易記錄分層整合（Plan 3） -->
+<script defer src="https://flow222git.github.io/jte-platform-2026/jte-crypto.js"></script>
+<script defer src="https://flow222git.github.io/jte-platform-2026/jte-privacy.js"></script>
+<script defer src="ven-i-privacy.js"></script>
 
 <!-- 練息場全平台使用者列（回首頁＋登入資訊） -->
 <script defer src="https://flow222git.github.io/jte-platform-2026/jte-userbar.js"></script>
