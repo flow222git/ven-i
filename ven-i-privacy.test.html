@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><title>ven-i-privacy tests</title>
+<script src="../jte-crypto.js"></script>
+<script>window.__JTE_PRIVACY_TEST = true;</script>
+<script src="../jte-privacy.js"></script>
+<script src="ven-i-privacy.js"></script>
+</head>
+<body>
+<pre id="out">running...</pre>
+<script>
+const out = document.getElementById('out');
+let pass = 0, fail = 0;
+const lines = [];
+function log(s){ lines.push(s); out.textContent = lines.join('\n'); }
+function assert(c, m){ if(!c) throw new Error(m || 'assert failed'); }
+function eq(a, b, m){ if(a !== b) throw new Error((m||'eq') + ' got['+a+'] want['+b+']'); }
+async function check(name, fn){
+  try { await fn(); pass++; log('PASS ' + name); }
+  catch (e){ fail++; log('FAIL ' + name + ' :: ' + (e && e.message || e)); }
+}
+
+// fake Firestore：支援 .collection('users').doc(email).get()/.set(data,{merge})
+function makeFakeDb(){
+  const store = {}; // email -> doc data
+  return {
+    _store: store,
+    collection(){ return {
+      doc(id){ return {
+        get(){ return Promise.resolve({ exists: id in store, data(){ return store[id]; } }); },
+        set(data, opts){ store[id] = (opts && opts.merge) ? Object.assign({}, store[id], data) : data; return Promise.resolve(); }
+      }; }
+    }; }
+  };
+}
+
+function unlockedPrivacy(){
+  const db = makeFakeDb(); JtePrivacy._reset(); JtePrivacy._setBackend({db, email:'u@x.com'});
+  sessionStorage.clear(); localStorage.removeItem('jte_dek_u@x.com');
+  return JtePrivacy._doEnable('pw-12345678'); // 啟用即解鎖，回恢復碼
+}
+const sampleBuyi = { id:'by-1', recordId:'by-1', source:'BuYi', ts:'2026-06-12T01:00:00Z',
+  ben:'乾為天', bian:'', changing:[], changingLabel:'六爻不變', question:'我該換工作嗎？', note:'想很久了' };
+
+async function run(){
+  assert(typeof crypto !== 'undefined' && crypto.subtle, 'WebCrypto unavailable (need secure context)');
+  assert(typeof JteCrypto === 'object', 'JteCrypto 應載入');
+  assert(typeof JtePrivacy === 'object', 'JtePrivacy 應載入');
+
+  await check('toCloudRec（已解鎖）：私密欄位加密進 priv、移除明文、保留可分析', async () => {
+    await unlockedPrivacy();
+    const c = await VenIPrivacy.toCloudRec(sampleBuyi);
+    eq(c.ben, '乾為天', '卦象保留'); eq(c.question, undefined, 'question 明文已移除'); eq(c.note, undefined, 'note 明文已移除');
+    assert(c.priv && c.priv.question && c.priv.question.iv && c.priv.question.ct, 'priv.question 為密文');
+    assert(c.priv.note && c.priv.note.ct, 'priv.note 為密文');
+  });
+  await check('toCloudRec（未解鎖）：私密欄位整個不上傳、無 priv、保留可分析', async () => {
+    JtePrivacy.lock(); sessionStorage.clear(); localStorage.removeItem('jte_dek_u@x.com');
+    const c = await VenIPrivacy.toCloudRec(sampleBuyi);
+    eq(c.ben, '乾為天', '卦象保留'); eq(c.question, undefined, 'question 未上傳'); eq(c.note, undefined, 'note 未上傳');
+    eq(c.priv, undefined, '無 priv');
+  });
+  await check('mergeCloud：本機明文優先、雲端獨有記錄解密併入、依 recordId 去重', async () => {
+    await unlockedPrivacy();
+    const cloudRec = await VenIPrivacy.toCloudRec({ ...sampleBuyi, id:'by-2', recordId:'by-2', question:'雲端獨有的問題', note:'' });
+    const cloudDays = { '2026-06-12': { linked: [ cloudRec ] } };
+    const localAll = { '2026-06-12': { linked: [ sampleBuyi ] } }; // by-1 在本機（明文）
+    const merged = await VenIPrivacy.mergeCloud(localAll, cloudDays);
+    const flat = []; Object.keys(merged).forEach(d => (merged[d].linked||[]).forEach(r => flat.push(r)));
+    const ids = flat.map(r => r.recordId).sort();
+    eq(ids.join(','), 'by-1,by-2', '兩筆都在、去重');
+    const r2 = flat.find(r => r.recordId === 'by-2');
+    eq(r2.question, '雲端獨有的問題', '雲端記錄已解密還原 question');
+    const r1 = flat.find(r => r.recordId === 'by-1');
+    eq(r1.question, '我該換工作嗎？', '本機記錄保留明文');
+  });
+  await check('mergeCloud（未解鎖）：雲端獨有記錄併入但私密欄位留空、不覆寫本機明文', async () => {
+    await unlockedPrivacy();
+    const cloudRec = await VenIPrivacy.toCloudRec({ ...sampleBuyi, id:'by-3', recordId:'by-3', question:'鎖住時看不到' });
+    JtePrivacy.lock(); sessionStorage.clear(); localStorage.removeItem('jte_dek_u@x.com');
+    const merged = await VenIPrivacy.mergeCloud({}, { '2026-06-12': { linked:[cloudRec] } });
+    const r = merged['2026-06-12'].linked.find(x => x.recordId === 'by-3');
+    assert(r, '記錄有併入'); assert(!r.question, '未解鎖時 question 留空');
+  });
+
+  log('---'); log('DONE pass=' + pass + ' fail=' + fail);
+  document.title = fail ? ('FAIL ' + fail) : 'OK';
+  window.__done = true;
+  try { await fetch('/__result', { method: 'POST', body: lines.join('\n') }); } catch (e) {}
+}
+window.__done = false;
+run();
+</script>
+</body></html>
