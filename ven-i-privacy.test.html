@@ -82,6 +82,17 @@ async function run(){
     assert(r, '記錄有併入'); assert(!r.question, '未解鎖時 question 留空');
   });
 
+  await check('mergeCloud：雲端兩筆都無 recordId/id → 都被併入、不互相吃掉', async () => {
+    // 兩筆皆無 key：不應因 undefined 互相去重而吃掉彼此（M1）
+    const a = { source:'BuYi', ben:'乾為天', ts:'2026-06-12T03:00:00Z' };
+    const b = { source:'BuYi', ben:'坤為地', ts:'2026-06-12T04:00:00Z' };
+    const merged = await VenIPrivacy.mergeCloud({}, { '2026-06-12': { linked:[a, b] } });
+    const flat = []; Object.keys(merged).forEach(d => (merged[d].linked||[]).forEach(r => flat.push(r)));
+    eq(flat.length, 2, '兩筆都併入');
+    const bens = flat.map(r => r.ben).sort();
+    eq(bens.join(','), '乾為天,坤為地', '兩筆都在、沒被互相去重吃掉');
+  });
+
   log('---'); log('DONE pass=' + pass + ' fail=' + fail);
   document.title = fail ? ('FAIL ' + fail) : 'OK';
   window.__done = true;

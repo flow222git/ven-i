@@ -1575,10 +1575,13 @@ function jteEmail(){return localStorage.getItem('jte_user_email')||'';}
 function jteKey(){const e=jteEmail();return e?'jte_daily_'+e.replace(/[^a-zA-Z0-9]/g,'_'):'jte_daily_v1';}
 function jteTodayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function jteAll(){try{return JSON.parse(localStorage.getItem(jteKey())||'{}')}catch(e){return{}}}
+// fail-closed 脫敏：VenIPrivacy 模組載入失敗時，本地去掉私密欄位再上傳（絕不上傳明文 question/note）。
+// 私密欄位清單須與 ven-i-privacy.js 的 PRIVATE_FIELDS 同步：['question','note']。
+function _venIStripPrivate(r){var o={};Object.keys(r).forEach(function(k){if(k!=='question'&&k!=='note')o[k]=r[k];});return o;}
 function jteFsSave(dateKey,day){
  const e=jteEmail();if(!_db||!e)return;
  const linked=day.linked||[];
- Promise.all(linked.map(function(r){return (window.VenIPrivacy?window.VenIPrivacy.toCloudRec(r):Promise.resolve(r));}))
+ Promise.all(linked.map(function(r){return window.VenIPrivacy?window.VenIPrivacy.toCloudRec(r):Promise.resolve(_venIStripPrivate(r));}))
   .then(function(cloudLinked){
     const cloudDay=Object.assign({},day,{linked:cloudLinked});
     return _db.collection('users').doc(e.toLowerCase().trim()).collection('daily').doc(dateKey).set(cloudDay,{merge:true});
@@ -1705,7 +1708,9 @@ function appendSaveBlock(container,source,buildRec){
 }
 
 /* —— 我的占問歷史 —— */
+var _venIRenderToken=0;
 function renderHistory(){
+ var my=++_venIRenderToken; // 重入 guard：多處 .then(renderHistory) 可能並發，回來時若非最新一輪就放棄渲染
  clearAll();
  const d=document.createElement("div");d.className="step";
  d.appendChild(backHomeLink());
@@ -1723,7 +1728,7 @@ function renderHistory(){
  const loading=document.createElement("p");loading.className="q-hint";loading.textContent="載入中…";
  d.appendChild(loading);
  app.appendChild(d);
- jteListRecordsMerged().then(function(list){_renderHistList(list,d,loading);});
+ jteListRecordsMerged().then(function(list){if(my!==_venIRenderToken)return;_renderHistList(list,d,loading);});
 }
 /* 私密同步狀態列：依 JtePrivacy 啟用/解鎖狀態渲染對應入口 */
 function _renderPrivacyBar(box){
@@ -1756,6 +1761,8 @@ function _maybeAutoUnlock(){
    }
  }).catch(function(){});
 }
+// HTML 跳脫：歷史卡片用 innerHTML 組裝，所有使用者輸入／雲端解密回來的私密內容（question/note/topic/summary 等）插入前都要跳脫，防 XSS。比照 jte-privacy.js 的 _esc。
+function _h(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function _renderHistList(list,d,loading){
  if(loading&&loading.parentNode)loading.parentNode.removeChild(loading);
  if(!list.length){
@@ -1767,15 +1774,15 @@ function _renderHistList(list,d,loading){
    const when=(l.ts||'').slice(0,16).replace('T',' ');
    let head,body;
    if(l.source==='WenYi'){
-     head=`<span class="hist-badge wy">問易</span><span class="hist-hex">${l.mainHex||''}</span><span class="hist-tone">${l.toneLabel||''}</span>`;
-     body=`${l.topic?('主題：'+l.topic+'　'):''}${l.summary||''}`;
+     head=`<span class="hist-badge wy">問易</span><span class="hist-hex">${_h(l.mainHex||'')}</span><span class="hist-tone">${_h(l.toneLabel||'')}</span>`;
+     body=`${l.topic?('主題：'+_h(l.topic)+'　'):''}${_h(l.summary||'')}`;
    }else{
-     head=`<span class="hist-badge by">卜易</span><span class="hist-hex">${l.ben||''}${l.bian?('→'+l.bian):''}</span><span class="hist-tone">${l.changingLabel||''}</span>`;
-     body=`${l.question?('問：'+l.question):'（未填問題）'}`;
+     head=`<span class="hist-badge by">卜易</span><span class="hist-hex">${_h(l.ben||'')}${l.bian?('→'+_h(l.bian)):''}</span><span class="hist-tone">${_h(l.changingLabel||'')}</span>`;
+     body=`${l.question?('問：'+_h(l.question)):'（未填問題）'}`;
    }
-   card.innerHTML=`<div class="hist-head">${head}<span class="hist-when">${when}</span></div>
+   card.innerHTML=`<div class="hist-head">${head}<span class="hist-when">${_h(when)}</span></div>
      <div class="hist-body">${body}</div>
-     <div class="hist-note-view">${l.note?('📝 '+l.note):'<span class="hist-empty">（沒有筆記）</span>'}</div>
+     <div class="hist-note-view">${l.note?('📝 '+_h(l.note)):'<span class="hist-empty">（沒有筆記）</span>'}</div>
      <div class="hist-ops"><button class="hist-edit">編輯筆記</button><button class="hist-del">刪除</button></div>`;
    card.querySelector(".hist-edit").onclick=function(){
      if(card.querySelector(".hist-edit-area"))return;

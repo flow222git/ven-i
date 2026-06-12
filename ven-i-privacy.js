@@ -23,14 +23,14 @@
   function mergeCloud(localAll, cloudDays){
     var result = JSON.parse(JSON.stringify(localAll || {}));
     var seen = {};
-    Object.keys(result).forEach(function (d){ (result[d].linked || []).forEach(function (r){ seen[r.recordId || r.id] = true; }); });
+    Object.keys(result).forEach(function (d){ (result[d].linked || []).forEach(function (r){ var k = r.recordId || r.id; if (k) seen[k] = true; }); });
     var unlocked = root.JtePrivacy && root.JtePrivacy.isUnlocked();
     var chain = Promise.resolve();
     Object.keys(cloudDays || {}).forEach(function (d){
       (cloudDays[d].linked || []).forEach(function (cr){
         var key = cr.recordId || cr.id;
-        if (seen[key]) return; // 本機已有（明文優先）→ 跳過
-        seen[key] = true;
+        if (key && seen[key]) return; // 本機已有（明文優先）→ 跳過；無 key（兩者皆 falsy）→ 不去重、直接併入
+        if (key) seen[key] = true;
         chain = chain.then(function (){
           var rec = {}; Object.keys(cr).forEach(function (k){ if (k !== 'priv') rec[k] = cr[k]; });
           if (unlocked && cr.priv){
