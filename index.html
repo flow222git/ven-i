@@ -1583,15 +1583,27 @@ function jteWriteRecord(rec){
  jteFsSave(today,day);
 }
 /* 列出本帳號所有 ven-i 記錄（跨日攤平、時間倒序）*/
+function _flattenVenI(all){var out=[];Object.keys(all).forEach(function(dk){(all[dk].linked||[]).forEach(function(l){if(l.source==='WenYi'||l.source==='BuYi')out.push(l);});});out.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});return out;}
 function jteListRecords(){
- const all=jteAll(),out=[];
- Object.keys(all).forEach(function(dk){
-   (all[dk].linked||[]).forEach(function(l){
-     if(l.source==='WenYi'||l.source==='BuYi')out.push(l);
-   });
+ return _flattenVenI(jteAll());
+}
+/* 從 Firestore 抓本帳號所有 daily 文件 */
+function jteFsLoadDays(){
+ const e=jteEmail();if(!_db||!e)return Promise.resolve({});
+ return _db.collection('users').doc(e.toLowerCase().trim()).collection('daily').get()
+  .then(function(snap){var days={};snap.forEach(function(doc){days[doc.id]=doc.data();});return days;})
+  .catch(function(){return {};});
+}
+/* async 版：把雲端 daily 併回本機、hydrate localStorage，回傳攤平清單 */
+function jteListRecordsMerged(){
+ const localAll=jteAll();
+ if(!window.VenIPrivacy)return Promise.resolve(_flattenVenI(localAll));
+ return jteFsLoadDays().then(function(cloudDays){
+   return window.VenIPrivacy.mergeCloud(localAll,cloudDays);
+ }).then(function(mergedAll){
+   try{localStorage.setItem(jteKey(),JSON.stringify(mergedAll));}catch(e){} // hydrate 本機（含已解密私密），讓編輯/刪除沿用既有機制
+   return _flattenVenI(mergedAll);
  });
- out.sort(function(a,b){return (b.ts||'').localeCompare(a.ts||'');});
- return out;
 }
 function _jteMutate(id,fn){
  const k=jteKey(),all=jteAll();let touched=null;
@@ -1692,10 +1704,16 @@ function renderHistory(){
    btn.onclick=function(){jteCheckLoginThenSave(function(){renderHistory();});};
    d.appendChild(btn);app.appendChild(d);return;
  }
- const list=jteListRecords();
+ const loading=document.createElement("p");loading.className="q-hint";loading.textContent="載入中…";
+ d.appendChild(loading);
+ app.appendChild(d);
+ jteListRecordsMerged().then(function(list){_renderHistList(list,d,loading);});
+}
+function _renderHistList(list,d,loading){
+ if(loading&&loading.parentNode)loading.parentNode.removeChild(loading);
  if(!list.length){
    d.insertAdjacentHTML("beforeend",`<p class="q-hint">還沒有存過記錄。問一次易，覺得值得留就存下來吧。</p>`);
-   app.appendChild(d);return;
+   return;
  }
  list.forEach(function(l){
    const card=document.createElement("div");card.className="hist-card";
@@ -1727,7 +1745,6 @@ function renderHistory(){
    card.querySelector(".hist-del").onclick=function(){if(confirm('確定刪除這筆記錄？')){jteDeleteRecord(l.id);renderHistory();}};
    d.appendChild(card);
  });
- app.appendChild(d);
 }
 
 state.mode="intro";state.bstep=0;state.question="";state.lines=[];state.bActiveHex=null;
