@@ -317,6 +317,12 @@
   .hist-ops{display:flex;gap:14px;margin-top:10px}
   .hist-ops button{background:none;border:none;font-family:inherit;font-size:12.5px;cursor:pointer;padding:0}
   .hist-edit{color:var(--accent)} .hist-del{color:var(--lack)}
+  .priv-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+  .priv-btn{background:var(--accent-soft);color:var(--accent);border:1px solid var(--line);
+    border-radius:999px;padding:6px 14px;font-family:inherit;font-size:12.5px;cursor:pointer}
+  .priv-btn:hover{background:var(--accent);color:#fff}
+  .priv-link{font-size:12px;color:var(--accent);text-decoration:none}
+  .priv-ok{font-size:12.5px;color:var(--neutral)}
   .hist-edit-area{margin-top:10px}
   .hist-ta{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:9px 11px;
     font-family:inherit;font-size:13.5px;line-height:1.7;color:var(--ink);resize:vertical}
@@ -1704,10 +1710,45 @@ function renderHistory(){
    btn.onclick=function(){jteCheckLoginThenSave(function(){renderHistory();});};
    d.appendChild(btn);app.appendChild(d);return;
  }
+ const pbar=document.createElement("div");pbar.className="priv-bar";
+ d.appendChild(pbar);
+ _renderPrivacyBar(pbar);
+ _maybeAutoUnlock();
  const loading=document.createElement("p");loading.className="q-hint";loading.textContent="載入中…";
  d.appendChild(loading);
  app.appendChild(d);
  jteListRecordsMerged().then(function(list){_renderHistList(list,d,loading);});
+}
+/* 私密同步狀態列：依 JtePrivacy 啟用/解鎖狀態渲染對應入口 */
+function _renderPrivacyBar(box){
+ if(!window.JtePrivacy){box.innerHTML='';return;}
+ box.innerHTML='<span class="q-hint" style="font-size:12px;color:#6B7A8D">私密同步：檢查中…</span>';
+ Promise.resolve(JtePrivacy.isEnabled()).then(function(enabled){
+   if(!enabled){
+     box.innerHTML='<button class="priv-btn">🔒 開啟跨裝置私密同步</button>';
+     box.querySelector('.priv-btn').onclick=function(){JtePrivacy.enable().then(function(){renderHistory();}).catch(function(){});};
+     return;
+   }
+   if(!JtePrivacy.isUnlocked()){
+     box.innerHTML='<button class="priv-btn">🔓 輸入密語解鎖私密內容</button> <a href="#" class="priv-link">換密語</a>';
+     box.querySelector('.priv-btn').onclick=function(){JtePrivacy.unlock().then(function(){renderHistory();}).catch(function(){});};
+     box.querySelector('.priv-link').onclick=function(ev){ev.preventDefault();JtePrivacy.changePassphrase().then(function(){renderHistory();}).catch(function(){});};
+     return;
+   }
+   box.innerHTML='<span class="priv-ok">✓ 已加密同步（連我們也解不開）</span> <a href="#" class="priv-link">鎖定</a>';
+   box.querySelector('.priv-link').onclick=function(ev){ev.preventDefault();JtePrivacy.lock();renderHistory();};
+ }).catch(function(){box.innerHTML='';});
+}
+/* 進歷史頁時若已啟用未解鎖→自動提示解鎖一次（使用者可取消）*/
+var _venIAutoUnlockTried=false;
+function _maybeAutoUnlock(){
+ if(_venIAutoUnlockTried||!window.JtePrivacy)return;
+ Promise.resolve(JtePrivacy.isEnabled()).then(function(enabled){
+   if(enabled&&!JtePrivacy.isUnlocked()&&!_venIAutoUnlockTried){
+     _venIAutoUnlockTried=true;
+     JtePrivacy.unlock().then(function(){renderHistory();}).catch(function(){});
+   }
+ }).catch(function(){});
 }
 function _renderHistList(list,d,loading){
  if(loading&&loading.parentNode)loading.parentNode.removeChild(loading);
