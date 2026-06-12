@@ -1823,8 +1823,33 @@ function _renderHistList(list,d,loading){
  });
 }
 
+/* 首次進站一次性隱私卡片：只在 veni_privacy_seen 未設時顯示一次，按「我知道了」寫旗標關閉 */
+function showFirstVisitPrivacyCard(){
+ try{ if(localStorage.getItem('veni_privacy_seen'))return; }catch(e){ return; }
+ var ov=document.createElement('div');
+ ov.id='veni-privacy-card';
+ ov.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(20,18,14,.45);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:18px;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif';
+ var card=document.createElement('div');
+ card.style.cssText='background:#fff;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.28);width:100%;max-width:340px;padding:24px 22px 18px;box-sizing:border-box;color:#1f2d3d;text-align:center';
+ card.innerHTML=
+   '<div style="font-size:30px;margin-bottom:6px">🔒</div>'+
+   '<h3 style="margin:0 0 12px;font-size:18px;color:#003D7C;font-weight:700">你寫的，只有你看得到</h3>'+
+   '<p style="margin:0 0 10px;font-size:13.5px;line-height:1.7;color:#43536B">你的問題與筆記只存在你的裝置。</p>'+
+   '<p style="margin:0 0 16px;font-size:13.5px;line-height:1.7;color:#43536B">若開啟跨裝置同步，內容會先加密，連我們也解不開。</p>'+
+   '<p style="margin:0 0 18px"><a href="#" id="veni-priv-learn" style="color:#003D7C;font-size:13px;text-decoration:underline">了解隱私</a></p>'+
+   '<div style="display:flex"><button type="button" id="veni-priv-ok" style="flex:1;border:none;border-radius:999px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;background:#003D7C;color:#fff">我知道了</button></div>';
+ ov.appendChild(card);
+ document.body.appendChild(ov);
+ card.querySelector('#veni-priv-learn').onclick=function(e){e.preventDefault();if(window.showPrivacyInfo)showPrivacyInfo();};
+ card.querySelector('#veni-priv-ok').onclick=function(){
+   try{localStorage.setItem('veni_privacy_seen','1');}catch(e){}
+   if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);
+ };
+}
+
 state.mode="intro";state.bstep=0;state.question="";state.lines=[];state.bActiveHex=null;
 renderIntro();
+showFirstVisitPrivacyCard();
 
 /* 開發測試用：console 輸入 testTriChange() 直達三爻變結果頁 */
 window.testTriChange=function(){
