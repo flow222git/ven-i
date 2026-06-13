@@ -8,6 +8,7 @@
   var currentReading = null;
   var currentAnn = null;
   var currentCategory = null;
+  var currentTimeCtx = null;
 
   // ── Interactive casting state ─────────────────────────────────────────────
   var castValues = [];
@@ -140,29 +141,179 @@
     });
   }
 
-  // ── Hex stack ─────────────────────────────────────────────────────────────
+  // ── Luju Card helpers ─────────────────────────────────────────────────────
 
-  function renderHexStack(reading) {
-    var movingSet = {};
-    (reading.movingIndexes || []).forEach(function (i) { movingSet[i] = true; });
-    qs('hexStack').innerHTML = [5, 4, 3, 2, 1, 0].map(function (index) {
-      return '<div class="stack-row">' + lineGraphic(reading.lines[index], !!movingSet[index]) + '</div>';
-    }).join('');
+  function relativeChipClass(relative) {
+    var map = { '官鬼': 'lc-c-guan', '父母': 'lc-c-fu', '兄弟': 'lc-c-xiong', '妻財': 'lc-c-cai', '子孫': 'lc-c-sun' };
+    return map[relative] || 'lc-c-fu';
   }
 
-  function renderCastingStack(casts, activeIndex) {
-    if (activeIndex == null) activeIndex = -1;
-    qs('hexStack').innerHTML = [5, 4, 3, 2, 1, 0].map(function (index) {
-      var cast = casts ? casts[index] : null;
-      var lineVal = cast ? JingFang.LINE_VALUES[cast.value] : null;
-      var rowClasses = ['stack-row'];
-      if (index === activeIndex) rowClasses.push('revealing');
-      return '<div class="' + rowClasses.join(' ') + '">' +
-        (lineVal
-          ? lineGraphic(lineVal.bit, lineVal.moving, index === activeIndex ? 'fresh' : '')
-          : pendingLineGraphic()) +
-        '</div>';
+  function buildFuNote(out, reading) {
+    var supports = out.layer2.supports || '';
+    var blocks = out.layer2.blocks || '';
+    var hidden = [];
+    var combined = supports + ' ' + blocks;
+    var relNames = ['官鬼', '父母', '兄弟', '妻財', '子孫'];
+    relNames.forEach(function (r) {
+      if (combined.indexOf(r + '沒上卦') !== -1) {
+        hidden.push(r);
+      }
+    });
+    if (!hidden.length) {
+      return '明面上角色齊全，伏神暫無缺位。';
+    }
+    return '潛力藏著未現：<b>' + hidden.map(escapeHtml).join('</b>、<b>') + '</b>——這些角色在伏，需主動引出。';
+  }
+
+  // 動爻數 → 傳統重點提示
+  var MOVING_HINT = [
+    '靜卦・看本卦整體',
+    '一爻動・重點看動爻的變化',
+    '二爻動・以上面的動爻為主',
+    '三爻動・本卦變卦並看，本卦為主',
+    '四爻動・重心移向變卦',
+    '五爻動・看變卦',
+    '六爻全變・看變卦'
+  ];
+
+  function renderLujuCard(reading, ann, out, timeCtx) {
+    var question = qs('question') ? qs('question').value : '';
+    var palace = reading.palace;
+    var yongshenRelative = out.layer2.yongshen.relative;
+    var movingCount = reading.movingIndexes.length;
+    var hasMoving = movingCount >= 1;
+
+    // Meta line: 宮 · 世代 | 月建月 · 日辰日 | 空亡
+    var metaParts = [
+      escapeHtml(palace.palace) + '宮 · ' + escapeHtml(palace.generation)
+    ];
+    if (timeCtx && timeCtx.monthBranch) {
+      metaParts.push(escapeHtml(timeCtx.monthBranch) + '月 · ' + escapeHtml(timeCtx.dayGanzhi || '—') + '日');
+    }
+    if (timeCtx && timeCtx.voidBranches && timeCtx.voidBranches.length) {
+      metaParts.push(escapeHtml(timeCtx.voidBranches.join('')) + ' 空亡');
+    }
+    // 動爻數重點提示
+    var movingHintIdx = Math.min(movingCount, 6);
+    metaParts.push(escapeHtml(MOVING_HINT[movingHintIdx]));
+
+    // 六爻 rows — index 5 downto 0 (top to bottom display)
+    var POS_LABELS = { 5: '上', 4: '五', 3: '四', 2: '三', 1: '二', 0: '初' };
+    var rowsHtml = [5, 4, 3, 2, 1, 0].map(function (i) {
+      var line = reading.lineDetails[i];
+      var a = ann[i];
+      var isYin = line.bit === 0;
+      var isShi = line.role.indexOf('世') !== -1;
+      var isYing = line.role.indexOf('應') !== -1;
+      var isMove = line.moving;
+      var isVoid = a.isVoid;
+      var isYong = yongshenRelative && line.relative === yongshenRelative;
+      var showStrength = isYong || isShi;
+
+      var rowDivClass = 'lc-row' + (isShi ? ' lc-shi' : '');
+      var yaoClass = 'lc-yao' + (isYin ? ' lc-yin' : '');
+      var yaoInner = isYin
+        ? '<div class="lc-seg"></div><div class="lc-gap"></div><div class="lc-seg"></div>'
+        : '<div class="lc-seg"></div>';
+
+      var chipClass = 'lc-chip ' + relativeChipClass(line.relative);
+      var najiaEsc = escapeHtml(line.najia.text + line.element);
+
+      var tags = '';
+      if (isYong) tags += '<span class="lc-tag lc-t-yong">用神</span>';
+      if (isMove) tags += '<span class="lc-tag lc-t-move">動</span>';
+      if (isShi)  tags += '<span class="lc-tag lc-t-shi">世</span>';
+      if (isYing) tags += '<span class="lc-tag lc-t-ying">應</span>';
+      if (isVoid) tags += '<span class="lc-tag lc-t-void">空</span>';
+      if (showStrength && a.strength) tags += '<span class="lc-tag lc-t-wang">' + escapeHtml(a.strength) + '</span>';
+
+      return '<div class="' + rowDivClass + '">' +
+        '<div class="lc-pos">' + escapeHtml(POS_LABELS[i]) + '</div>' +
+        '<div class="' + yaoClass + '">' + yaoInner + '</div>' +
+        '<div class="lc-role">' +
+          '<span class="' + chipClass + '">' + escapeHtml(line.relative) + '</span>' +
+          '<span class="lc-najia">' + najiaEsc + '</span>' +
+          tags +
+        '</div>' +
+      '</div>';
     }).join('');
+
+    // Signal
+    var signal = out.signal;
+    var signalLabel = out.signalLabel || '';
+    var lampChar = signalLabel.charAt(0);
+    var sigClass = (signal === 'advance' || signal === 'small') ? 'lc-sig-pine'
+                 : (signal === 'avoid') ? 'lc-sig-red' : 'lc-sig-gold';
+
+    // Oneliner: out.layer1.situation (with glossary wrapping)
+    var onelineEsc = wrapGlossTerms(escapeHtml(out.layer1.situation));
+    // Hidden note (with glossary wrapping)
+    var fuNoteHtml = wrapGlossTerms(buildFuNote(out, reading));
+
+    // 變卦 hexhead — only show arrow+變卦 when there are moving lines
+    var hexheadHtml;
+    if (hasMoving) {
+      hexheadHtml =
+        '<div class="lc-hexhead">' +
+          '<div class="lch"><div class="lch-sym">' + escapeHtml(reading.hexagram.symbol) + '</div>' +
+            '<div class="lch-nm">' + escapeHtml(reading.hexagram.fullName) + '</div></div>' +
+          '<div class="lch-arrow">▶</div>' +
+          '<div class="lch"><div class="lch-sym">' + escapeHtml(reading.changedHexagram.symbol) + '</div>' +
+            '<div class="lch-nm">' + escapeHtml(reading.changedHexagram.fullName) + '</div></div>' +
+        '</div>';
+    } else {
+      hexheadHtml =
+        '<div class="lc-hexhead lc-hexhead-static">' +
+          '<div class="lch"><div class="lch-sym">' + escapeHtml(reading.hexagram.symbol) + '</div>' +
+            '<div class="lch-nm">' + escapeHtml(reading.hexagram.fullName) + '</div></div>' +
+          '<div class="lch-static-note">六爻安靜・本卦未變</div>' +
+        '</div>';
+    }
+
+    // 斷吉凶 fortune block
+    var fortuneData = YiInterpret.judgeFortune(reading, ann, out);
+    var fortuneHtml;
+    if (fortuneData.mode === 'soft') {
+      fortuneHtml =
+        '<div class="lc-fortune">' +
+          '<div class="lc-fortune-head">🔮 傳統斷法（實驗性・待驗證）</div>' +
+          '<div class="lc-fortune-verdict">' + escapeHtml(fortuneData.verdict) + '</div>' +
+          '<div class="lc-fortune-warn">⚠️ 這是傳統推斷的「一種可能」，不是保證；之後可回頭驗證準不準。</div>' +
+        '</div>';
+    } else {
+      fortuneHtml =
+        '<div class="lc-fortune">' +
+          '<div class="lc-fortune-head">🔮 傳統斷法（實驗性・待驗證）</div>' +
+          '<div class="lc-fortune-meta">' +
+            '<span class="lc-fortune-tend">傾向：' + escapeHtml(fortuneData.label) + '</span>' +
+            '<span class="lc-fortune-timing">應期：' + escapeHtml(fortuneData.timing) + '</span>' +
+          '</div>' +
+          '<div class="lc-fortune-verdict">' + wrapGlossTerms(escapeHtml(fortuneData.verdict)) + '</div>' +
+          '<div class="lc-fortune-warn">⚠️ 這是傳統推斷的「一種可能」，不是保證；之後可回頭驗證準不準。</div>' +
+        '</div>';
+    }
+
+    var html =
+      '<div class="luju-card">' +
+        '<div class="lc-eyebrow">Jing Fang Yi Gua · 局勢圖</div>' +
+        '<div class="lc-title">京房一卦</div>' +
+        '<div class="lc-q">問：' + escapeHtml(question || '（未填問題）') + '</div>' +
+        hexheadHtml +
+        '<div class="lc-meta">' + metaParts.join(' | ') + '</div>' +
+        '<div class="lc-stack">' + rowsHtml + '</div>' +
+        '<div class="lc-hidden-note">伏（藏著未現）：' + fuNoteHtml + '</div>' +
+        '<div class="lc-signal ' + sigClass + '">' +
+          '<div class="lc-lamp">' + escapeHtml(lampChar) + '</div>' +
+          '<div class="lc-sig-st"><b>' + escapeHtml(signalLabel) + '</b>' +
+            '<div>' + escapeHtml(out.layer1.nextStep) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="lc-oneliner">' + onelineEsc + '</div>' +
+        fortuneHtml +
+        '<div class="lc-foot">反思鏡 · 相對參考、非預言 | 哪句打中你？下一步你想怎麼走？</div>' +
+      '</div>';
+
+    qs('luju-card').innerHTML = html;
   }
 
   // ── Coin SVG ──────────────────────────────────────────────────────────────
@@ -224,10 +375,8 @@
       var n = throwIndex + 1;
       qs('coinResult').textContent = '第 ' + n + ' 爻：' + line.value + ' · ' + (LINE_TOSS_LABELS[line.value] || '');
 
-      // Push value and update stack (index = throwIndex which is 0=初爻)
+      // Push value
       castValues.push(line.value);
-      var stackCasts = castValues.map(function (v) { return { value: v }; });
-      renderCastingStack(stackCasts, throwIndex);
 
       // Update button label
       if (castValues.length === 6) {
@@ -247,33 +396,27 @@
 
   function applyReading(values) {
     var reading = JingFang.analyze(values);
-    var timeCtx = JingFang.buildTimeContext(JingFang.autoTimeContextForDate(new Date()));
+    var timeCtx = JingFang.autoTimeContextForDate(new Date());
     var ann = JingFang.annotateTime(reading, timeCtx);
     var out = YiInterpret.interpret(reading, ann, { question: qs('question').value });
     currentReading = reading;
     currentAnn = ann;
     currentCategory = out.category;
-    renderResult(reading, ann, out);
+    currentTimeCtx = timeCtx;
+    renderResult(reading, ann, out, timeCtx);
   }
 
   // ── renderResult ──────────────────────────────────────────────────────────
 
-  function renderResult(reading, ann, out) {
+  function renderResult(reading, ann, out, timeCtx) {
     var resultEl = qs('result');
     resultEl.classList.remove('hidden', 'casting');
 
-    // Hex stack
-    renderHexStack(reading);
-
-    // Hex name and movement
-    qs('hexName').textContent = reading.hexagram.symbol + ' ' + reading.hexagram.fullName;
-    qs('hexMove').textContent = out.layer1.movement;
+    // 局勢卡 (replaces hex-head + layer1)
+    renderLujuCard(reading, ann, out, timeCtx);
 
     // Topic pick (category chips)
     renderTopicPick(out.category);
-
-    // Layer 1 — situation + signal card
-    renderLayer1(out);
 
     // Layer 2 — yongshen details
     renderLayer2(out);
@@ -317,33 +460,9 @@
       });
       currentCategory = cat;
       renderTopicPick(cat);
-      renderLayer1(out2);
+      renderLujuCard(currentReading, currentAnn, out2, currentTimeCtx);
       renderLayer2(out2);
     });
-  }
-
-  function renderLayer1(out) {
-    var signal = out.signal;
-    var signalLabel = escapeHtml(out.signalLabel);
-    var situationEsc = escapeHtml(out.layer1.situation);
-    var nextStepEsc = escapeHtml(out.layer1.nextStep);
-    var movementEsc = escapeHtml(out.layer1.movement);
-
-    var situationWrapped = wrapGlossTerms(situationEsc);
-    var nextStepWrapped = wrapGlossTerms(nextStepEsc);
-
-    var cardHtml =
-      '<div class="signal-card ' + 'signal-' + signal + '">' +
-        '<div class="signal-badge">' + signalLabel + '</div>' +
-        '<div>' +
-          '<p class="signal-next">' + nextStepWrapped + '</p>' +
-          '<p class="movement-text">' + movementEsc + '</p>' +
-        '</div>' +
-      '</div>';
-
-    qs('layer1').innerHTML =
-      '<p class="situation">' + situationWrapped + '</p>' +
-      cardHtml;
   }
 
   function renderLayer2(out) {
@@ -515,13 +634,10 @@
       var resultEl = qs('result');
       resultEl.classList.remove('hidden');
       qs('topicPick').innerHTML = '';
-      qs('layer1').innerHTML = '';
+      qs('luju-card').innerHTML = '<p style="color:var(--muted);text-align:center;padding:18px 0;">靜心想著你的問題，由下而上、一爻一爻擲</p>';
       qs('layer2body').innerHTML = '';
       qs('layer3body').innerHTML = '';
       qs('reflect').innerHTML = '';
-      qs('hexName').textContent = '起卦中';
-      qs('hexMove').textContent = '靜心想著你的問題，由下而上、一爻一爻擲';
-      renderCastingStack([], -1);
       var castArea = qs('castArea');
       castArea.classList.remove('hidden');
       initCastArea();

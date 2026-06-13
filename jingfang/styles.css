@@ -1037,3 +1037,350 @@ textarea.reflect-input {
     gap: 2px;
   }
 }
+
+/* ── 局勢卡 (Luju Card) ── */
+.luju-card {
+  position: relative;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 18px 44px rgba(74,62,44,.13);
+  padding: 22px 24px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.luju-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--gold);
+  opacity: .8;
+}
+
+.luju-card .lc-eyebrow {
+  font-family: ui-sans-serif, sans-serif;
+  font-size: 11px;
+  letter-spacing: .22em;
+  color: var(--bamboo);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.luju-card .lc-title {
+  font-size: 18px;
+  color: var(--ink);
+  margin: 2px 0 4px;
+  letter-spacing: .04em;
+}
+
+.luju-card .lc-q {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+/* ── hexhead ── */
+.luju-card .lc-hexhead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 4px 0 6px;
+}
+
+.luju-card .lc-hexhead .lch {
+  text-align: center;
+}
+
+.luju-card .lc-hexhead .lch-sym {
+  font-size: 32px;
+  line-height: 1;
+  color: var(--pine);
+}
+
+.luju-card .lc-hexhead .lch-nm {
+  font-size: 14px;
+  color: var(--ink);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.luju-card .lc-hexhead .lch-arrow {
+  font-size: 20px;
+  color: var(--gold);
+}
+
+/* ── meta ── */
+.luju-card .lc-meta {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  font-family: ui-sans-serif, sans-serif;
+}
+
+/* ── stack (六爻) ── */
+.luju-card .lc-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+.luju-card .lc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.luju-card .lc-row.lc-shi {
+  background: var(--surface-2);
+  border-radius: 10px;
+  margin: 0 -6px;
+  padding: 3px 6px;
+}
+
+.luju-card .lc-pos {
+  width: 24px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  flex: none;
+  font-family: ui-sans-serif, sans-serif;
+}
+
+.luju-card .lc-yao {
+  width: 140px;
+  display: flex;
+  gap: 12px;
+  flex: none;
+}
+
+.luju-card .lc-seg {
+  height: 12px;
+  background: var(--ink);
+  border-radius: 3px;
+  flex: 1;
+}
+
+.luju-card .lc-yao.lc-yin .lc-seg {
+  flex: none;
+  width: 58px;
+}
+
+.luju-card .lc-yao .lc-gap {
+  flex: none;
+  width: 20px;
+}
+
+.luju-card .lc-role {
+  font-size: 12.5px;
+  color: var(--ink);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.luju-card .lc-chip {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: ui-sans-serif, sans-serif;
+  color: #fff;
+}
+
+.luju-card .lc-chip.lc-c-guan  { background: var(--cinnabar); }
+.luju-card .lc-chip.lc-c-fu    { background: var(--blue); }
+.luju-card .lc-chip.lc-c-xiong { background: var(--gold); }
+.luju-card .lc-chip.lc-c-cai   { background: var(--pine); }
+.luju-card .lc-chip.lc-c-sun   { background: var(--bamboo); }
+
+.luju-card .lc-najia {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.luju-card .lc-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-family: ui-sans-serif, sans-serif;
+  border: 1px solid;
+}
+
+.luju-card .lc-t-yong  { color: var(--cinnabar); border-color: var(--cinnabar); font-weight: 700; }
+.luju-card .lc-t-shi   { color: var(--pine);     border-color: var(--pine); }
+.luju-card .lc-t-ying  { color: var(--muted);    border-color: var(--line); }
+.luju-card .lc-t-move  { color: var(--gold);     border-color: var(--gold); }
+.luju-card .lc-t-void  { color: var(--muted);    border-color: var(--line); }
+.luju-card .lc-t-wang  { color: var(--pine);     border-color: var(--pine); }
+
+/* ── hidden-note ── */
+.luju-card .lc-hidden-note {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.luju-card .lc-hidden-note b {
+  color: var(--cinnabar);
+}
+
+/* ── signal ── */
+.luju-card .lc-signal {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid #e7d6ad;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: #fbf2dd;
+}
+
+.luju-card .lc-signal.lc-sig-pine   { background: rgba(239,242,225,.7); border-color: rgba(53,97,79,.34); }
+.luju-card .lc-signal.lc-sig-gold   { background: #fbf2dd; border-color: #e7d6ad; }
+.luju-card .lc-signal.lc-sig-red    { background: rgba(255,238,232,.7); border-color: rgba(157,75,52,.34); }
+
+.luju-card .lc-lamp {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.luju-card .lc-sig-pine .lc-lamp  { background: var(--pine); }
+.luju-card .lc-sig-gold .lc-lamp  { background: var(--gold); }
+.luju-card .lc-sig-red  .lc-lamp  { background: var(--cinnabar); }
+
+.luju-card .lc-sig-st b {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.luju-card .lc-sig-st div {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── oneliner ── */
+.luju-card .lc-oneliner {
+  font-size: 13.5px;
+  color: var(--ink);
+  line-height: 1.85;
+  border-top: 1px dashed var(--line);
+  padding-top: 11px;
+}
+
+/* ── foot ── */
+.luju-card .lc-foot {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 12px;
+  font-family: ui-sans-serif, sans-serif;
+  text-align: center;
+}
+
+/* ── 靜卦標注 ── */
+.luju-card .lc-hexhead-static {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.luju-card .lc-hexhead .lch-static-note {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: ui-sans-serif, sans-serif;
+  letter-spacing: .04em;
+  margin-top: 2px;
+}
+
+/* ── 傳統斷法（fortune）block ── */
+.luju-card .lc-fortune {
+  border-top: 2px dashed var(--gold);
+  margin-top: 14px;
+  padding-top: 12px;
+  background: rgba(169, 130, 59, 0.06);
+  border-radius: 0 0 10px 10px;
+  padding: 12px 14px;
+  margin-top: 14px;
+  border: 1px dashed rgba(169, 130, 59, 0.42);
+  border-radius: 10px;
+}
+
+.luju-card .lc-fortune-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  font-family: ui-sans-serif, sans-serif;
+  letter-spacing: .04em;
+  margin-bottom: 8px;
+}
+
+.luju-card .lc-fortune-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 7px;
+  font-size: 12.5px;
+}
+
+.luju-card .lc-fortune-tend {
+  color: var(--pine-dark);
+  font-weight: 700;
+}
+
+.luju-card .lc-fortune-timing {
+  color: var(--muted);
+}
+
+.luju-card .lc-fortune-verdict {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.75;
+  margin-bottom: 8px;
+}
+
+.luju-card .lc-fortune-warn {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: ui-sans-serif, sans-serif;
+  line-height: 1.5;
+  border-top: 1px solid rgba(169, 130, 59, 0.22);
+  padding-top: 7px;
+  margin-top: 4px;
+}
+
+/* ── Luju Card Responsive ── */
+@media (max-width: 480px) {
+  .luju-card {
+    padding: 16px 14px;
+  }
+
+  .luju-card .lc-yao {
+    width: 120px;
+  }
+
+  .luju-card .lc-yao.lc-yin .lc-seg {
+    width: 48px;
+  }
+}

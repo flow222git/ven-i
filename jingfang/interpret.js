@@ -235,5 +235,62 @@
     };
   }
 
-  root.YiInterpret = { parseIntent: parseIntent, pickYongshen: pickYongshen, locateYongshen: locateYongshen, interpret: interpret, _strengthRank: strengthRank };
+  // —— 斷吉凶（judgeFortune）：傳統斷法，實驗性，健康類不斷 ——
+  var FORTUNE_SEASON = { '木': '春・寅卯月', '火': '夏・巳午月', '土': '四季末・辰戌丑未月', '金': '秋・申酉月', '水': '冬・亥子月' };
+  var SIGNAL_FORTUNE = {
+    advance: { label: '偏吉・可成', tendency: '吉' },
+    small:   { label: '小吉・緩成', tendency: '小吉' },
+    clarify: { label: '未定・宜觀望', tendency: '平' },
+    shore:   { label: '偏弱・條件不足', tendency: '弱' },
+    avoid:   { label: '偏凶・受阻宜守', tendency: '凶' }
+  };
+
+  function judgeFortune(reading, annotations, out) {
+    // 健康類不作吉凶斷
+    if (out.category === 'health') {
+      return { mode: 'soft', verdict: '健康不作吉凶斷——請以身體訊號與醫療專業為準。' };
+    }
+
+    var sf = SIGNAL_FORTUNE[out.signal] || SIGNAL_FORTUNE.clarify;
+    var label = sf.label;
+    var tendency = sf.tendency;
+
+    // 應期：依用神元素判斷
+    var ys = out.layer2.yongshen;
+    var timing;
+    if (!ys.present) {
+      timing = '用神不上卦，應期待伏神透出';
+    } else {
+      // Re-locate to get element and isVoid
+      var yongLoc = locateYongshen(reading, annotations, ys.relative);
+      if (!yongLoc.present) {
+        timing = '用神不上卦，應期待伏神透出';
+      } else if (yongLoc.isVoid) {
+        timing = '待沖空、出空之時';
+      } else {
+        var elem = yongLoc.line ? yongLoc.line.element : null;
+        if (elem && FORTUNE_SEASON[elem]) {
+          timing = '待「' + elem + '」旺之時（' + FORTUNE_SEASON[elem] + '）';
+        } else {
+          timing = '應期視用神旺衰而定';
+        }
+      }
+    }
+
+    // 斷語（verdict）
+    var relName = ys.relative || '世爻';
+    var stateDesc = ys.state ? ('（' + strengthPlain(ys.state) + '）') : '';
+    var verdictBase;
+    if (out.signal === 'advance') verdictBase = '，事有成象，宜把握時機推進。';
+    else if (out.signal === 'small') verdictBase = '，事可緩成，宜小步為營勿躁進。';
+    else if (out.signal === 'clarify') verdictBase = '，局勢未明，宜靜待觀望再決策。';
+    else if (out.signal === 'shore') verdictBase = '，支撐未足，宜先補強條件再行動。';
+    else verdictBase = '，壓力偏重，宜守勢降風險、暫勿強行。';
+
+    var verdict = '用神「' + relName + '」' + stateDesc + verdictBase;
+
+    return { mode: 'verdict', label: label, tendency: tendency, verdict: verdict, timing: timing };
+  }
+
+  root.YiInterpret = { parseIntent: parseIntent, pickYongshen: pickYongshen, locateYongshen: locateYongshen, interpret: interpret, judgeFortune: judgeFortune, _strengthRank: strengthRank };
 })(typeof window !== 'undefined' ? window : this);
