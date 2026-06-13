@@ -113,9 +113,29 @@
     return 'avoid';
   }
   function strengthPlain(s) { return { '旺':'很有力','相':'有支撐','平':'平平','弱':'偏弱','陷':'受困' }[s] || '平平'; }
+  // 爻位（由下而上 1..6）＝事情的進程：越下面越早期、越上面越接近收尾。白話階段：
+  var YAO_STAGE = {
+    1: { name: '起步', desc: '才剛開始、根基還淺' },
+    2: { name: '打底', desc: '慢慢站穩、累積中' },
+    3: { name: '難關', desc: '卡在半路、最容易出狀況' },
+    4: { name: '接近核心', desc: '快到重點、要做抉擇' },
+    5: { name: '正當位', desc: '時機與位置都好、最能發揮' },
+    6: { name: '到頂', desc: '差不多到頂、再衝會過頭' }
+  };
+  function yaoStage(pos) { return YAO_STAGE[pos] || { name: '', desc: '' }; }
+  // 主敘述用（簡短）：位置＋階段名
+  function worldResponseShort(reading) {
+    var w = reading.palace.worldLine, r = reading.palace.responseLine;
+    return '你（世）在' + reading.lineDetails[w-1].label + '・' + yaoStage(w).name
+      + '，對方／外部（應）在' + reading.lineDetails[r-1].label + '・' + yaoStage(r).name;
+  }
+  // 細項用（完整）：位置＋階段名＋白話意義
   function worldResponseText(reading) {
     var w = reading.palace.worldLine, r = reading.palace.responseLine;
-    return '世在' + reading.lineDetails[w-1].label + '（你）、應在' + reading.lineDetails[r-1].label + '（對方／外部）';
+    var ws = yaoStage(w), rs = yaoStage(r);
+    return '你（世）在' + reading.lineDetails[w-1].label + '＝「' + ws.name + '」（' + ws.desc + '）；'
+      + '對方／外部（應）在' + reading.lineDetails[r-1].label + '＝「' + rs.name + '」（' + rs.desc + '）。'
+      + '爻位由下而上是事情的進程：越下面越早期、越上面越接近收尾。';
   }
   function describeRelative(reading, annotations, relative) {
     var loc = locateYongshen(reading, annotations, relative);
@@ -181,7 +201,7 @@
         + (yong.moving ? '、又在動（正在變化）' : '');
     }
 
-    var situation = '你問的這件事，落在「' + hexName + '」：' + yongPlain + '。' + worldResponseText(reading) + '。';
+    var situation = '你問的這件事，落在「' + hexName + '」：' + yongPlain + '。' + worldResponseShort(reading) + '。';
     var movement = reading.movingIndexes.length === 0
       ? '六爻安靜，本卦「' + hexName + '」保持原局、暫無明顯變動——先看眼前條件，不是立刻大轉向。'
       : '從「' + hexName + '」走向「' + reading.changedHexagram.fullName + '」——' + moveTxt + '，這是局勢正在移動的方向。';
