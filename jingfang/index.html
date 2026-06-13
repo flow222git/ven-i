@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>京房一卦</title><link rel="stylesheet" href="styles.css">
+</head><body>
+<main class="shell">
+  <header class="app-header"><div class="brand-copy"><p class="eyebrow">Jing Fang Yi Gua</p><h1>京房一卦</h1>
+    <p class="tagline">一面誠實的決策反思鏡 · 看懂此刻，再決定下一步</p></div></header>
+  <section class="ask">
+    <p class="ask-frame">卦不預測命運，是把你心裡「已知卻說不清」的，攤開來給你看——看懂此刻，下一步由你決定。</p>
+    <label class="field"><span>想問一件事</span>
+      <textarea id="question" rows="3" placeholder="例如：這個合作案接下來三個月適合推進嗎？"></textarea></label>
+    <div class="ask-actions">
+      <button id="cast" class="primary" type="button">擲三錢起卦</button>
+      <button id="manualToggle" type="button">手動六爻</button>
+    </div>
+    <div id="manualLines" class="manual-lines hidden"></div>
+    <p class="ask-hint">一卦問一件事、帶個時間範圍最好。解讀是反思參考，不是預測。</p>
+  </section>
+  <section id="result" class="result hidden">
+    <div id="castNotice" class="cast-notice" aria-live="polite"></div>
+    <div class="hex-head">
+      <div class="hex-stack" id="hexStack"></div>
+      <div class="hex-meta"><h2 id="hexName">—</h2><p id="hexMove" class="muted">—</p></div>
+    </div>
+    <div id="layer1" class="layer layer1"></div>
+    <details id="layer2" class="layer layer2"><summary>為什麼這樣看</summary><div id="layer2body"></div></details>
+    <details id="layer3" class="layer layer3"><summary>細節（爻表・旺衰）</summary><div id="layer3body"></div></details>
+    <div id="reflect" class="reflect"></div>
+    <p class="disclaimer" id="disclaimer"></p>
+  </section>
+</main>
+<div id="glossPop" class="gloss-pop hidden"></div>
+<script src="engine.js"></script>
+<script src="interpret.js"></script>
+<script src="glossary.js"></script>
+<script src="app.js"></script>
+</body></html>
