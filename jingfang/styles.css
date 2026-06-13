@@ -902,6 +902,113 @@ textarea.reflect-input {
   animation: yao-ink 0.72s ease-in-out infinite alternate;
 }
 
+/* ── Coin casting ── */
+.cast-area {
+  padding: 12px 0 4px;
+}
+
+.coin-wrap {
+  margin: 14px 0 4px;
+  text-align: center;
+}
+
+.coins {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.coin {
+  width: 54px;
+  height: 54px;
+  transition: transform .25s;
+  display: inline-block;
+}
+
+.coin svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.coin.flip {
+  transform: rotateY(180deg);
+}
+
+.coin-result {
+  font-size: 14px;
+  color: var(--muted);
+  min-height: 22px;
+  font-family: ui-serif, 'Songti TC', serif;
+}
+
+/* ── Topic pick ── */
+.topic-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.topic-pick-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.topic-pick-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  opacity: 0.72;
+}
+
+.topic-chip {
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.84rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.topic-chip:hover {
+  border-color: var(--pine);
+}
+
+.topic-chip.on {
+  background: var(--pine);
+  border-color: var(--pine);
+  color: #fffdf6;
+}
+
+/* ── Ask examples ── */
+.ask-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.ask-ex {
+  font-size: 12.5px;
+  color: var(--pine);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 32px;
+}
+
+.ask-ex:hover {
+  border-color: var(--pine);
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .shell {

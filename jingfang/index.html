@@ -10,6 +10,7 @@
     <p class="ask-frame">卦不預測命運，是把你心裡「已知卻說不清」的，攤開來給你看——看懂此刻，下一步由你決定。</p>
     <label class="field"><span>想問一件事</span>
       <textarea id="question" rows="3" placeholder="例如：這個合作案接下來三個月適合推進嗎？"></textarea></label>
+    <div id="askExamples" class="ask-examples"></div>
     <div class="ask-actions">
       <button id="cast" class="primary" type="button">擲三錢起卦</button>
       <button id="manualToggle" type="button">手動六爻</button>
@@ -19,10 +20,12 @@
   </section>
   <section id="result" class="result hidden">
     <div id="castNotice" class="cast-notice" aria-live="polite"></div>
+    <div id="castArea" class="cast-area hidden"></div>
     <div class="hex-head">
       <div class="hex-stack" id="hexStack"></div>
       <div class="hex-meta"><h2 id="hexName">—</h2><p id="hexMove" class="muted">—</p></div>
     </div>
+    <div id="topicPick"></div>
     <div id="layer1" class="layer layer1"></div>
     <details id="layer2" class="layer layer2"><summary>為什麼這樣看</summary><div id="layer2body"></div></details>
     <details id="layer3" class="layer layer3"><summary>細節（爻表・旺衰）</summary><div id="layer3body"></div></details>

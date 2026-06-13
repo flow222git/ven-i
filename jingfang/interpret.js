@@ -146,7 +146,9 @@
   function interpret(reading, annotations, opts) {
     opts = opts || {};
     var pi = parseIntent(opts.question);
-    var ys = pickYongshen(pi.category, pi.intent);
+    var category = opts.category || pi.category;
+    var intent = opts.intent || pi.intent;
+    var ys = pickYongshen(category, intent);
     var yong = locateYongshen(reading, annotations, ys.primary);
     var foeLoc = ys.foe ? locateYongshen(reading, annotations, ys.foe) : null;
     var beneficLoc = ys.benefic ? locateYongshen(reading, annotations, ys.benefic) : null;
@@ -189,7 +191,7 @@
     var why = buildWhy(reading, annotations, ys, yong, foeLoc, beneficLoc, signal);
 
     return {
-      intent: pi.intent, category: pi.category, signal: signal, signalLabel: SIGNAL_LABEL[signal],
+      intent: intent, category: category, signal: signal, signalLabel: SIGNAL_LABEL[signal],
       layer1: { situation: situation, movement: movement, nextStep: nextStep },
       layer2: layer2, why: why
     };

@@ -1,13 +1,29 @@
 (function () {
   'use strict';
 
-  var CAST_STEP_DELAY = 520;
-  var CAST_FINISH_DELAY = 260;
-
-  var castMotionTimer = null;
-  var castMotionToken = 0;
-  var feedbackTimer = null;
   var manualVisible = false;
+  var feedbackTimer = null;
+
+  // ── Module-level state for category re-interpret ──────────────────────────
+  var currentReading = null;
+  var currentAnn = null;
+  var currentCategory = null;
+
+  // ── Interactive casting state ─────────────────────────────────────────────
+  var castValues = [];
+
+  // ── Category labels ───────────────────────────────────────────────────────
+  var CATEGORY_LABELS = { general: '總體', career: '事業', wealth: '財務', relationship: '感情', health: '健康' };
+  var CATEGORY_KEYS = ['general', 'career', 'wealth', 'relationship', 'health'];
+
+  // ── Question examples ─────────────────────────────────────────────────────
+  var EXAMPLES = [
+    '這個合作案接下來三個月適合推進嗎？',
+    '目前最大的卡點是什麼？',
+    '這筆收入三個月內能不能落袋？',
+    '這段關係下一步怎麼走？',
+    '最近身心狀態要先注意什麼？'
+  ];
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -25,13 +41,10 @@
   }
 
   // ── Glossary term wrapping ───────────────────────────────────────────────
-  // Terms are plain CJK, safe to use in replace after escaping.
-  // Wrap all occurrences of known terms with <span class="gloss" data-term="…">term</span>.
 
   var glossaryTerms = null;
   function getGlossaryTerms() {
     if (!glossaryTerms) {
-      // Sort longer terms first to avoid partial matches
       glossaryTerms = YiGlossary.all().slice().sort(function (a, b) {
         return b.length - a.length;
       });
@@ -41,14 +54,12 @@
 
   var _glossRe = null;
   function wrapGlossTerms(escapedHtml) {
-    var terms = getGlossaryTerms();           // 已依長度由長到短排序
+    var terms = getGlossaryTerms();
     if (!terms.length) return escapedHtml;
     if (!_glossRe) {
       var alt = terms.map(function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|');
       _glossRe = new RegExp('(' + alt + ')', 'g');
     }
-    // 單次掃描原始（已跳脫）文字：每個 match 來自原文，彼此不重疊，
-    // 不會掃進已插入 span 的屬性，故即使日後詞庫擴充也不會破壞 HTML。
     return escapedHtml.replace(_glossRe, function (m) {
       return '<span class="gloss" data-term="' + m + '">' + m + '</span>';
     });
@@ -94,13 +105,6 @@
     }, 1800);
   }
 
-  function setCastBusy(isBusy) {
-    qs('cast').disabled = isBusy;
-    qs('manualToggle').disabled = isBusy;
-    var result = qs('result');
-    if (result) result.classList.toggle('casting', isBusy);
-  }
-
   // ── Manual input ──────────────────────────────────────────────────────────
 
   function renderManualInputs() {
@@ -136,11 +140,6 @@
     });
   }
 
-  function setManualLineValue(index, value) {
-    var select = qs('manualLines').querySelector('select[data-line-index="' + index + '"]');
-    if (select) select.value = String(value);
-  }
-
   // ── Hex stack ─────────────────────────────────────────────────────────────
 
   function renderHexStack(reading) {
@@ -166,47 +165,82 @@
     }).join('');
   }
 
-  // ── Casting ritual ─────────────────────────────────────────────────────────
+  // ── Coin SVG ──────────────────────────────────────────────────────────────
 
-  function runCoinSequence(casts, complete) {
-    window.clearTimeout(castMotionTimer);
-    var token = ++castMotionToken;
-    var partialCasts = Array(6).fill(null);
+  function coinSVG(stt) {
+    var col = stt === 'yang' ? 'var(--pine)' : (stt === 'yin' ? 'var(--muted)' : 'var(--line)');
+    var marks = stt === 'yang'
+      ? '<g stroke="' + col + '" stroke-width="2" stroke-linecap="round"><line x1="30" y1="9" x2="30" y2="15"/><line x1="30" y1="45" x2="30" y2="51"/><line x1="9" y1="30" x2="15" y2="30"/><line x1="45" y1="30" x2="51" y2="30"/></g>'
+      : (stt === 'yin'
+        ? '<g stroke="' + col + '" stroke-width="2" stroke-linecap="round" opacity=".7"><line x1="20" y1="20" x2="24" y2="24"/><line x1="40" y1="20" x2="36" y2="24"/><line x1="20" y1="40" x2="24" y2="36"/><line x1="40" y1="40" x2="36" y2="36"/></g>'
+        : '');
+    var fill = stt === 'blank' ? 'none' : (stt === 'yang' ? 'var(--surface-2)' : 'var(--surface)');
+    return '<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="27" fill="' + fill + '" stroke="' + col + '" stroke-width="2.5"/><rect x="22" y="22" width="16" height="16" rx="1.5" fill="var(--surface)" stroke="' + col + '" stroke-width="2.5"/>' + marks + '</svg>';
+  }
 
-    setCastBusy(true);
-    // Show result section in casting state
-    qs('result').classList.remove('hidden');
-    renderCastingStack(partialCasts, -1);
-    qs('hexName').textContent = '六爻起中';
-    qs('hexMove').textContent = '自初爻而上，逐爻成卦';
-    qs('layer1').innerHTML = '';
-    qs('layer2body').innerHTML = '';
-    qs('layer3body').innerHTML = '';
-    qs('reflect').innerHTML = '';
-    showCastFeedback('三錢入手，初爻將起...');
+  // ── Coin toss ─────────────────────────────────────────────────────────────
 
-    function revealLine(index) {
-      if (token !== castMotionToken) return;
-      if (index >= casts.length) {
-        castMotionTimer = window.setTimeout(function () {
-          if (token !== castMotionToken) return;
-          complete();
-          setCastBusy(false);
-        }, CAST_FINISH_DELAY);
-        return;
+  function tossLine() {
+    var c = [0, 0, 0].map(function () { return Math.random() < 0.5 ? 2 : 3; });
+    var sum = c[0] + c[1] + c[2]; // 6..9
+    return { coins: c, value: sum };
+  }
+
+  var LINE_TOSS_LABELS = { 6: '老陰變', 7: '少陽', 8: '少陰', 9: '老陽變' };
+
+  function initCastArea() {
+    var area = qs('castArea');
+    area.innerHTML =
+      '<div class="coin-wrap">' +
+        '<div class="coins" id="coinRow">' +
+          '<span class="coin" id="coin0">' + coinSVG('blank') + '</span>' +
+          '<span class="coin" id="coin1">' + coinSVG('blank') + '</span>' +
+          '<span class="coin" id="coin2">' + coinSVG('blank') + '</span>' +
+        '</div>' +
+        '<div class="coin-result" id="coinResult"></div>' +
+      '</div>' +
+      '<div style="text-align:center;margin-top:8px">' +
+        '<button id="castThrow" class="primary" type="button">擲第 1 爻</button>' +
+      '</div>';
+    qs('castThrow').addEventListener('click', onCastThrow);
+  }
+
+  function onCastThrow() {
+    if (castValues.length < 6) {
+      var line = tossLine();
+      var throwIndex = castValues.length; // 0-based index of爻 being thrown (bottom-up)
+
+      // Animate coins
+      var coinEls = [qs('coin0'), qs('coin1'), qs('coin2')];
+      coinEls.forEach(function (el) { el.classList.add('flip'); });
+      window.setTimeout(function () {
+        coinEls.forEach(function (el, i) {
+          el.innerHTML = coinSVG(line.coins[i] === 3 ? 'yang' : 'yin');
+          el.classList.remove('flip');
+        });
+      }, 160);
+
+      // Show result text
+      var n = throwIndex + 1;
+      qs('coinResult').textContent = '第 ' + n + ' 爻：' + line.value + ' · ' + (LINE_TOSS_LABELS[line.value] || '');
+
+      // Push value and update stack (index = throwIndex which is 0=初爻)
+      castValues.push(line.value);
+      var stackCasts = castValues.map(function (v) { return { value: v }; });
+      renderCastingStack(stackCasts, throwIndex);
+
+      // Update button label
+      if (castValues.length === 6) {
+        qs('castThrow').textContent = '看結果';
+      } else {
+        qs('castThrow').textContent = '擲第 ' + (castValues.length + 1) + ' 爻';
       }
-      var cast = casts[index];
-      var lineVal = JingFang.LINE_VALUES[cast.value];
-      partialCasts[index] = cast;
-      setManualLineValue(index, cast.value);
-      renderCastingStack(partialCasts, index);
-      showCastFeedback(
-        JingFang.LINE_LABELS[index] + '落定：' + JingFang.coinText(cast.coins) + '｜' + cast.value + ' ' + lineVal.label
-      );
-      castMotionTimer = window.setTimeout(function () { revealLine(index + 1); }, CAST_STEP_DELAY);
+    } else {
+      // All 6 done — hide cast area and run reading
+      qs('castArea').classList.add('hidden');
+      setManualValues(castValues);
+      applyReading(castValues);
     }
-
-    castMotionTimer = window.setTimeout(function () { revealLine(0); }, 260);
   }
 
   // ── applyReading ──────────────────────────────────────────────────────────
@@ -216,6 +250,9 @@
     var timeCtx = JingFang.buildTimeContext(JingFang.autoTimeContextForDate(new Date()));
     var ann = JingFang.annotateTime(reading, timeCtx);
     var out = YiInterpret.interpret(reading, ann, { question: qs('question').value });
+    currentReading = reading;
+    currentAnn = ann;
+    currentCategory = out.category;
     renderResult(reading, ann, out);
   }
 
@@ -232,6 +269,9 @@
     qs('hexName').textContent = reading.hexagram.symbol + ' ' + reading.hexagram.fullName;
     qs('hexMove').textContent = out.layer1.movement;
 
+    // Topic pick (category chips)
+    renderTopicPick(out.category);
+
     // Layer 1 — situation + signal card
     renderLayer1(out);
 
@@ -244,21 +284,51 @@
     // Reflect / why
     renderReflect(reading);
 
-    // 免責於 DOMContentLoaded 已設定且不變，渲染時不需重設。
-    // 術語浮層用 document 委派監聽（見 DOMContentLoaded），此處不需逐次綁定。
-
     // Scroll into view
     resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // ── Topic pick ────────────────────────────────────────────────────────────
+
+  function renderTopicPick(activeCategory) {
+    currentCategory = activeCategory;
+    var chips = CATEGORY_KEYS.map(function (cat) {
+      var label = escapeHtml(CATEGORY_LABELS[cat] || cat);
+      var isOn = cat === activeCategory ? ' on' : '';
+      return '<button type="button" class="topic-chip' + isOn + '" data-cat="' + escapeHtml(cat) + '">' + label + '</button>';
+    }).join('');
+    qs('topicPick').innerHTML =
+      '<div class="topic-pick">' +
+        '<span class="topic-pick-label">看起來你問的是</span>' +
+        chips +
+        '<span class="topic-pick-hint">不對？點一下換</span>' +
+      '</div>';
+  }
+
+  function bindTopicPick() {
+    document.addEventListener('click', function (e) {
+      var chip = e.target.closest('.topic-chip');
+      if (!chip) return;
+      var cat = chip.getAttribute('data-cat');
+      if (!cat || !currentReading) return;
+      var out2 = YiInterpret.interpret(currentReading, currentAnn, {
+        question: qs('question').value,
+        category: cat
+      });
+      currentCategory = cat;
+      renderTopicPick(cat);
+      renderLayer1(out2);
+      renderLayer2(out2);
+    });
+  }
+
   function renderLayer1(out) {
-    var signal = out.signal; // 'advance'|'small'|'clarify'|'shore'|'avoid'
+    var signal = out.signal;
     var signalLabel = escapeHtml(out.signalLabel);
     var situationEsc = escapeHtml(out.layer1.situation);
     var nextStepEsc = escapeHtml(out.layer1.nextStep);
     var movementEsc = escapeHtml(out.layer1.movement);
 
-    // Wrap glossary terms (escape first, then wrap)
     var situationWrapped = wrapGlossTerms(situationEsc);
     var nextStepWrapped = wrapGlossTerms(nextStepEsc);
 
@@ -420,18 +490,42 @@
     qs('glossPop').classList.add('hidden');
   }
 
+  // ── Ask examples ──────────────────────────────────────────────────────────
+
+  function renderAskExamples() {
+    var container = qs('askExamples');
+    if (!container) return;
+    container.innerHTML = EXAMPLES.map(function (text) {
+      return '<button type="button" class="ask-ex">' + escapeHtml(text) + '</button>';
+    }).join('');
+    container.addEventListener('click', function (e) {
+      var btn = e.target.closest('.ask-ex');
+      if (btn) {
+        qs('question').value = btn.textContent;
+      }
+    });
+  }
+
   // ── Event wiring ──────────────────────────────────────────────────────────
 
   function bindEvents() {
-    // Cast button
+    // Cast button — start interactive casting
     qs('cast').addEventListener('click', function () {
-      var casts = JingFang.castCoins();
-      runCoinSequence(casts, function () {
-        var values = casts.map(function (c) { return c.value; });
-        setManualValues(values);
-        applyReading(values);
-        showCastFeedback('六爻成卦：' + JingFang.analyze(values).hexagram.fullName);
-      });
+      castValues = [];
+      var resultEl = qs('result');
+      resultEl.classList.remove('hidden');
+      qs('topicPick').innerHTML = '';
+      qs('layer1').innerHTML = '';
+      qs('layer2body').innerHTML = '';
+      qs('layer3body').innerHTML = '';
+      qs('reflect').innerHTML = '';
+      qs('hexName').textContent = '起卦中';
+      qs('hexMove').textContent = '靜心想著你的問題，由下而上、一爻一爻擲';
+      renderCastingStack([], -1);
+      var castArea = qs('castArea');
+      castArea.classList.remove('hidden');
+      initCastArea();
+      resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     // Manual toggle
@@ -446,6 +540,9 @@
         qs('manualToggle').textContent = '手動六爻';
       }
     });
+
+    // Topic chip re-interpret (delegated)
+    bindTopicPick();
 
     // Glossary popover — delegated on document
     document.addEventListener('click', function (e) {
@@ -466,6 +563,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     renderManualInputs();
+    renderAskExamples();
     bindEvents();
 
     qs('disclaimer').textContent = '京房一卦是傳統易學規則的反思與決策輔助，幫你整理局勢與下一步方向，不預測命運、不替代醫療/法律/投資/心理治療等專業判斷。';
