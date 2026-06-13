@@ -163,10 +163,16 @@
     if (yong.present === false) {
       yongPlain = '代表「' + (ys.primary || '主線') + '」的爻這次沒上卦（要看伏神），等於這條線此刻不在明面上';
     } else if (ys.riskPrimary) {
-      yongPlain = '代表「壓力／病象」的「' + (yong.relative || ys.primary) + '」此刻' + strengthPlain(yong.strength)
-        + (yong.isVoid ? '、正逢空（像在消退）' : '')
-        + (yong.moving ? '、又在動' : '')
-        + '——這一類越強越要當心';
+      // 健康類：用病象專屬的強弱字，並直接講出「這次是強/弱、所以…」的結論（不用抽象規則）
+      var ill = strengthRank(yong.strength);
+      var illWord = { 4:'很盛', 3:'偏盛', 2:'中等', 1:'偏弱', 0:'很弱、快退了' }[ill] || '中等';
+      var illVerdict = (ill >= 3)
+        ? '——也就是病象／壓力這陣子偏強，要多當心'
+        : ((ill <= 1 || yong.isVoid) ? '——也就是病象／壓力不算重，是相對好的訊號' : '——壓力中等，留意但不必慌');
+      yongPlain = '代表「壓力／病象」的「' + (yong.relative || ys.primary) + '」此刻' + illWord
+        + (yong.isVoid ? '、又逢空（像在消退）' : '')
+        + (yong.moving ? '、還在動（變化中）' : '')
+        + illVerdict;
     } else {
       yongPlain = '代表「' + (yong.relative || ys.primary) + '」的爻'
         + (yong.isWorld ? '就是你自己（世爻）' : '')
