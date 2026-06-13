@@ -123,19 +123,31 @@
     6: { name: '到頂', desc: '差不多到頂、再衝會過頭' }
   };
   function yaoStage(pos) { return YAO_STAGE[pos] || { name: '', desc: '' }; }
+  // 「應」代表誰，跟著問題類型變（健康問自己的身體、沒有「對方」）
+  var RESPONSE_ROLE = {
+    relationship: '對方',
+    wealth: '外部／對方（市場、合作方）',
+    career: '外部／對方（公司、合作方）',
+    health: '外在處境（作息、環境）',
+    general: '外部局面'
+  };
+  function responseRole(category) { return RESPONSE_ROLE[category] || '外部'; }
   // 主敘述用（簡短）：位置＋階段名
-  function worldResponseShort(reading) {
+  function worldResponseShort(reading, category) {
     var w = reading.palace.worldLine, r = reading.palace.responseLine;
     return '你（世）在' + reading.lineDetails[w-1].label + '・' + yaoStage(w).name
-      + '，對方／外部（應）在' + reading.lineDetails[r-1].label + '・' + yaoStage(r).name;
+      + '，' + responseRole(category) + '（應）在' + reading.lineDetails[r-1].label + '・' + yaoStage(r).name;
   }
   // 細項用（完整）：位置＋階段名＋白話意義
-  function worldResponseText(reading) {
+  function worldResponseText(reading, category) {
     var w = reading.palace.worldLine, r = reading.palace.responseLine;
     var ws = yaoStage(w), rs = yaoStage(r);
+    var note = (category === 'health')
+      ? '（健康問的是你自己的身體，沒有真正的「對方」，世應僅供參考——主要看病象／復原力。）'
+      : '爻位由下而上是事情的進程：越下面越早期、越上面越接近收尾。';
     return '你（世）在' + reading.lineDetails[w-1].label + '＝「' + ws.name + '」（' + ws.desc + '）；'
-      + '對方／外部（應）在' + reading.lineDetails[r-1].label + '＝「' + rs.name + '」（' + rs.desc + '）。'
-      + '爻位由下而上是事情的進程：越下面越早期、越上面越接近收尾。';
+      + responseRole(category) + '（應）在' + reading.lineDetails[r-1].label + '＝「' + rs.name + '」（' + rs.desc + '）。'
+      + note;
   }
   function describeRelative(reading, annotations, relative) {
     var loc = locateYongshen(reading, annotations, relative);
@@ -201,7 +213,7 @@
         + (yong.moving ? '、又在動（正在變化）' : '');
     }
 
-    var situation = '你問的這件事，落在「' + hexName + '」：' + yongPlain + '。' + worldResponseShort(reading) + '。';
+    var situation = '你問的這件事，落在「' + hexName + '」：' + yongPlain + '。' + worldResponseShort(reading, category) + '。';
     var movement = reading.movingIndexes.length === 0
       ? '六爻安靜，本卦「' + hexName + '」保持原局、暫無明顯變動——先看眼前條件，不是立刻大轉向。'
       : '從「' + hexName + '」走向「' + reading.changedHexagram.fullName + '」——' + moveTxt + '，這是局勢正在移動的方向。';
@@ -209,7 +221,7 @@
 
     var layer2 = {
       yongshen: { relative: ys.primary, present: yong.present !== false, state: yong.strength || '伏', plain: yongPlain },
-      worldResponse: worldResponseText(reading),
+      worldResponse: worldResponseText(reading, category),
       supports: (ys.support || ys.benefic) ? ('可借力：' + describeRelative(reading, annotations, ys.support || ys.benefic)) : '—',
       blocks: ys.foe ? ('要留意：' + describeRelative(reading, annotations, ys.foe)) : '—',
       timing: timingText(annotations, yong)
