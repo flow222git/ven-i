@@ -7,11 +7,15 @@
   // ── Module-level state for category re-interpret ──────────────────────────
   var currentReading = null;
   var currentAnn = null;
+  var currentOut = null;
   var currentCategory = null;
   var currentTimeCtx = null;
 
   // ── Interactive casting state ─────────────────────────────────────────────
   var castValues = [];
+
+  // ── History click handler (stored to allow removal before re-adding) ──────
+  var _historyClickHandler = null;
 
   // ── Category labels ───────────────────────────────────────────────────────
   var CATEGORY_LABELS = { general: '總體', career: '事業', wealth: '財務', relationship: '感情', health: '健康' };
@@ -77,7 +81,15 @@
     return rec;
   }
   function rremove(id) { localStorage.setItem(RKEY, JSON.stringify(rload().filter(function (x) { return x.id !== id; }))); }
-  window.YiReflect = { save: rsave, list: rload, remove: rremove };
+  function rsetOutcome(id, outcome) {
+    var l = rload();
+    var found = false;
+    for (var i = 0; i < l.length; i++) {
+      if (l[i].id === id) { l[i].outcome = outcome; found = true; break; }
+    }
+    if (found) { localStorage.setItem(RKEY, JSON.stringify(l)); }
+  }
+  window.YiReflect = { save: rsave, list: rload, remove: rremove, setOutcome: rsetOutcome };
 
   // ── Line graphics ─────────────────────────────────────────────────────────
 
@@ -401,6 +413,7 @@
     var out = YiInterpret.interpret(reading, ann, { question: qs('question').value });
     currentReading = reading;
     currentAnn = ann;
+    currentOut = out;
     currentCategory = out.category;
     currentTimeCtx = timeCtx;
     renderResult(reading, ann, out, timeCtx);
@@ -508,6 +521,154 @@
     qs('layer3body').innerHTML = '<table>' + thead + tbody + '</table>';
   }
 
+  // ── renderHistory ─────────────────────────────────────────────────────────
+
+  function renderHistory() {
+    var container = qs('historyView');
+    if (!container) return;
+    var records = window.YiReflect.list().slice().reverse();
+
+    // Summary
+    var verified = records.filter(function (r) {
+      return r.outcome && ['準','部分準','不準'].indexOf(r.outcome.accuracy) !== -1;
+    });
+    var summaryHtml;
+    if (verified.length > 0) {
+      var cnt = { '準': 0, '部分準': 0, '不準': 0 };
+      verified.forEach(function (r) { cnt[r.outcome.accuracy]++; });
+      summaryHtml = '<div class="history-summary">已驗證 ' + verified.length + ' 筆 &middot; 準 ' + cnt['準'] + ' &middot; 部分 ' + cnt['部分準'] + ' &middot; 不準 ' + cnt['不準'] + '</div>';
+    } else {
+      summaryHtml = '<div class="history-summary history-summary-empty">占過的卦會留在這裡，事後可回填結果來驗證。</div>';
+    }
+
+    // Cards
+    var cardsHtml = records.map(function (r) {
+      var id = escapeHtml(r.id || '');
+      var date = escapeHtml((r.ts || '').slice(0, 10));
+      var qShort = escapeHtml((r.q || '').slice(0, 20)) + ((r.q || '').length > 20 ? '…' : '');
+      var hexLine = escapeHtml(r.benHex || r.hex || '');
+      if (r.bianHex && r.movingCount !== 0) {
+        hexLine += ' ▶ ' + escapeHtml(r.bianHex);
+      }
+      // Outcome badge
+      var acc = r.outcome && r.outcome.accuracy;
+      var badgeHtml;
+      if (acc === '準') badgeHtml = '<span class="outcome-badge ob-jun">✓準</span>';
+      else if (acc === '部分準') badgeHtml = '<span class="outcome-badge ob-partial">～部分</span>';
+      else if (acc === '不準') badgeHtml = '<span class="outcome-badge ob-miss">✗不準</span>';
+      else badgeHtml = '<span class="outcome-badge ob-pending">…待回填</span>';
+      // Tend chip
+      var tendHtml = '';
+      if (r.fortune && r.fortune.mode !== 'soft' && r.fortune.label) {
+        tendHtml = '<span class="tend-chip">' + escapeHtml(r.fortune.label) + '</span>';
+      }
+
+      // Expanded body
+      var outcomeText = r.outcome ? escapeHtml(r.outcome.text || '') : '';
+      var hitHtml = r.hit ? '<div class="hcb-row"><b>打中：</b>' + escapeHtml(r.hit) + '</div>' : '';
+      var missHtml = r.miss ? '<div class="hcb-row"><b>不對：</b>' + escapeHtml(r.miss) + '</div>' : '';
+      var planHtml = r.plan ? '<div class="hcb-row"><b>打算：</b>' + escapeHtml(r.plan) + '</div>' : '';
+      var yongshenHtml = r.yongshen ? '<div class="hcb-row"><b>用神：</b>' + escapeHtml(r.yongshen) + '</div>' : '';
+      var signalHtml = r.signalLabel ? '<div class="hcb-row"><b>燈號：</b>' + escapeHtml(r.signalLabel) + (r.nextStep ? '　' + escapeHtml(r.nextStep) : '') + '</div>' : '';
+      var fortuneHtml = '';
+      if (r.fortune && r.fortune.mode !== 'soft') {
+        fortuneHtml = '<div class="hcb-row"><b>斷吉凶：</b>' + escapeHtml(r.fortune.label) + (r.fortune.timing ? ' · ' + escapeHtml(r.fortune.timing) : '') + (r.fortune.verdict ? ' · ' + escapeHtml(r.fortune.verdict) : '') + '</div>';
+      }
+
+      var currentAcc = acc || '';
+      var accBtns = ['準','部分準','不準','未定'].map(function (a) {
+        var isActive = currentAcc === a ? ' active' : '';
+        return '<button type="button" class="acc-btn' + isActive + '" data-acc="' + escapeHtml(a) + '">' + escapeHtml(a) + '</button>';
+      }).join('');
+
+      return '<div class="history-card" data-id="' + id + '">' +
+        '<div class="history-card-head">' +
+          '<span class="hch-date">' + date + '</span>' +
+          '<span class="hch-q">' + qShort + '</span>' +
+          '<span class="hch-hex">' + hexLine + '</span>' +
+          tendHtml + badgeHtml +
+        '</div>' +
+        '<div class="history-card-body">' +
+          '<div class="hcb-row hcb-q"><b>問：</b>' + escapeHtml(r.q || '') + '</div>' +
+          yongshenHtml + signalHtml + fortuneHtml + hitHtml + missHtml + planHtml +
+          '<div class="fillout-area">' +
+            '<label class="fillout-label">後來實際發生什麼？</label>' +
+            '<textarea class="fillout-text" rows="2" placeholder="（選填）">' + outcomeText + '</textarea>' +
+            '<div class="fillout-acc">' + accBtns + '</div>' +
+            '<div class="fillout-foot">' +
+              '<button type="button" class="fillout-save-btn" data-id="' + id + '">存結果</button>' +
+              '<span class="fillout-confirm hidden">已記下</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="hcb-foot">' +
+            '<button type="button" class="history-del-btn" data-id="' + id + '">刪除</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    container.innerHTML =
+      '<div class="history-inner">' +
+        '<button type="button" class="history-back-btn" id="historyBack">← 返回起卦</button>' +
+        '<h2 class="history-title">歷史紀錄</h2>' +
+        summaryHtml +
+        '<div class="history-list">' + (cardsHtml || '<p class="history-empty">還沒有任何記錄。</p>') + '</div>' +
+      '</div>';
+
+    // Bind card events — remove old handler first to prevent accumulation
+    if (_historyClickHandler) {
+      container.removeEventListener('click', _historyClickHandler);
+    }
+    _historyClickHandler = function (e) {
+      // Toggle expand
+      var head = e.target.closest('.history-card-head');
+      if (head) {
+        var card = head.closest('.history-card');
+        if (card) { card.classList.toggle('expanded'); return; }
+      }
+      // Accuracy btn
+      var accBtn = e.target.closest('.acc-btn');
+      if (accBtn) {
+        var card2 = accBtn.closest('.history-card');
+        if (card2) {
+          card2.querySelectorAll('.acc-btn').forEach(function (b) { b.classList.remove('active'); });
+          accBtn.classList.add('active');
+        }
+        return;
+      }
+      // Save outcome
+      var saveBtn = e.target.closest('.fillout-save-btn');
+      if (saveBtn) {
+        var card3 = saveBtn.closest('.history-card');
+        if (card3) {
+          var textarea = card3.querySelector('.fillout-text');
+          var activeAcc = card3.querySelector('.acc-btn.active');
+          var text = textarea ? textarea.value : '';
+          var accuracy = activeAcc ? activeAcc.getAttribute('data-acc') : '未定';
+          var id3 = saveBtn.getAttribute('data-id');
+          window.YiReflect.setOutcome(id3, { text: text, accuracy: accuracy, filledAt: new Date().toISOString() });
+          var conf = card3.querySelector('.fillout-confirm');
+          if (conf) {
+            conf.classList.remove('hidden');
+            setTimeout(function () {
+              renderHistory();
+            }, 900);
+          }
+        }
+        return;
+      }
+      // Delete
+      var delBtn = e.target.closest('.history-del-btn');
+      if (delBtn) {
+        var id4 = delBtn.getAttribute('data-id');
+        window.YiReflect.remove(id4);
+        renderHistory();
+        return;
+      }
+    };
+    container.addEventListener('click', _historyClickHandler);
+  }
+
   function renderReflect(reading) {
     var reflectEl = qs('reflect');
     if (!reflectEl) return;
@@ -549,7 +710,7 @@
         '<label class="reflect-label">哪一句不對？<input class="reflect-input" id="rMiss" type="text" placeholder="（選填）" /></label>' +
         '<label class="reflect-label">你打算怎麼做？<textarea class="reflect-input" id="rPlan" rows="2" placeholder="（選填）"></textarea></label>' +
         '<div class="reflect-form-foot">' +
-          '<button class="reflect-save-btn" type="button" id="rSave">記下這次</button>' +
+          '<button class="reflect-save-btn" type="button" id="rSave">存入紀錄</button>' +
           '<span class="reflect-confirm hidden" id="rConfirm">已記下</span>' +
         '</div>' +
       '</div>' +
@@ -560,7 +721,31 @@
       var miss = qs('rMiss').value;
       var plan = qs('rPlan').value;
       var q = qs('question') ? qs('question').value : '';
-      window.YiReflect.save({ q: q, hex: hexName, hit: hit, miss: miss, plan: plan });
+      // Gather full record from current reading state
+      var fortuneData = (currentReading && currentAnn)
+        ? YiInterpret.judgeFortune(currentReading, currentAnn, currentOut)
+        : null;
+      var yongshenStr = '';
+      if (currentOut && currentOut.layer2 && currentOut.layer2.yongshen) {
+        yongshenStr = (currentOut.layer2.yongshen.relative || '') + ' ' + (currentOut.layer2.yongshen.state || '');
+      }
+      window.YiReflect.save({
+        q: q,
+        benHex: reading && reading.hexagram ? reading.hexagram.fullName : '',
+        bianHex: reading && reading.changedHexagram ? reading.changedHexagram.fullName : '',
+        movingCount: reading && reading.movingIndexes ? reading.movingIndexes.length : 0,
+        category: currentOut ? currentOut.category : '',
+        intent: currentOut ? (currentOut.intent || '') : '',
+        signal: currentOut ? (currentOut.signal || '') : '',
+        signalLabel: currentOut ? (currentOut.signalLabel || '') : '',
+        nextStep: currentOut && currentOut.layer1 ? (currentOut.layer1.nextStep || '') : '',
+        yongshen: yongshenStr,
+        fortune: fortuneData,
+        hit: hit,
+        miss: miss,
+        plan: plan,
+        outcome: null
+      });
       qs('rHit').value = '';
       qs('rMiss').value = '';
       qs('rPlan').value = '';
@@ -654,6 +839,21 @@
       } else {
         container.classList.add('hidden');
         qs('manualToggle').textContent = '手動六爻';
+      }
+    });
+
+    // History button
+    qs('historyBtn').addEventListener('click', function () {
+      renderHistory();
+      document.querySelector('.ask').classList.add('hidden');
+      qs('historyView').classList.remove('hidden');
+    });
+
+    // History back — delegated on historyView
+    qs('historyView').addEventListener('click', function (e) {
+      if (e.target.closest('#historyBack')) {
+        qs('historyView').classList.add('hidden');
+        document.querySelector('.ask').classList.remove('hidden');
       }
     });
 
