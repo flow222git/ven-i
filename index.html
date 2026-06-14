@@ -877,6 +877,17 @@ function renderReplay(){
 /* 報告 */
 function renderReport(){
  const r=state.result;
+ // 寫入「此刻的八卦能量讀數」快照，供八卦人格測驗做「底色 vs 此刻」疊圖用（每次卜卦完成都會寫一次）
+ try{
+   var _nowScores = (state.result && state.result.s) ? state.result.s : null;
+   if(_nowScores){
+     localStorage.setItem('bagua_now_v1', JSON.stringify({
+       scores: _nowScores,
+       mainHex: (typeof BAGUA!=='undefined' && state.result.main && BAGUA[state.result.main]) ? BAGUA[state.result.main] : (state.result.main||''),
+       ts: new Date().toISOString()
+     }));
+   }
+ }catch(e){}
  const pair=(state.confirm==="partial")?[r.main,r.sec]:null;
  let mainHex=state.activeHex||(state.confirm==="no"?r.sec:r.main);
  const M=HEX[mainHex];
